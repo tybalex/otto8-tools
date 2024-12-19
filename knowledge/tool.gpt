@@ -7,13 +7,27 @@ Params: Query: A search query that will be evaluated against the knowledge set
 Metadata: category: Capability
 Metadata: icon: https://cdn.jsdelivr.net/npm/@phosphor-icons/core@2/assets/duotone/brain-duotone.svg
 
-#!${GPTSCRIPT_TOOL_DIR}/bin/gptscript-go-tool retrieve --flows-file=blueprint:otto "${QUERY}"
+#!${GPTSCRIPT_TOOL_DIR}/bin/gptscript-go-tool retrieve --flows-file=blueprint:obot "${QUERY}"
 
 ---
 Name: context
 Type: context
 
 #!/bin/bash
+
+if [ -n "${KNOWLEDGE_SUMMARY}" ]; then
+  cat <<EOF
+START INSTRUCTIONS: KNOWLEDGE SUMMARY
+
+Below is a JSON document describing some of the knowledge that is available in your knowledge set. Truncated content
+is indicated with by the field 'partial: true' in which only the first 3000 characters of the document are shown.
+The rest of the document can be queried by using the knowledge tool to query the knowledge set:
+
+${KNOWLEDGE_SUMMARY}
+
+END INSTRUCTIONS: KNOWLEDGE SUMMARY
+EOF
+fi
 
 if [ -z "${KNOW_DATASETS}" ]; then
   exit 0

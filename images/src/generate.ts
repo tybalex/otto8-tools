@@ -1,14 +1,15 @@
 import OpenAI from "openai"
 import * as gptscript from "@gptscript-ai/gptscript"
 import axios from "axios"
+import sharp from "sharp"
 import {createHash} from "node:crypto"
 
 type ImageSize = '1024x1024' | '256x256' | '512x512' | '1792x1024' | '1024x1792';
 type ImageQuality = 'standard' | 'hd';
 
-const threadId = process.env.ACORN_THREAD_ID
-const acornServerUrl = process.env.ACORN_SERVER_URL
-const downloadBaseUrl = (threadId && acornServerUrl) ? `${acornServerUrl}/api/threads/${threadId}/file` : null
+const threadId = process.env.OBOT_THREAD_ID
+const obotServerUrl = process.env.OBOT_SERVER_URL
+const downloadBaseUrl = (threadId && obotServerUrl) ? `${obotServerUrl}/api/threads/${threadId}/file` : null
 
 export async function generateImages(
   prompt: string = '',
@@ -36,7 +37,7 @@ export async function generateImages(
 
   try {
     const response = await openai.images.generate({
-      model: process.env.ACORN_DEFAULT_IMAGE_GENERATION_MODEL ?? 'dall-e-3',
+      model: process.env.OBOT_DEFAULT_IMAGE_GENERATION_MODEL ?? 'dall-e-3',
       prompt,
       size: size as ImageSize,
       quality: quality as ImageQuality,
@@ -75,13 +76,17 @@ export async function generateImages(
 }
 
 async function download(client: gptscript.GPTScript, imageUrl: string): Promise<string> {
+  // Download the image from the URL, typically a PNG
   const response = await axios.get(imageUrl, {
     responseType: 'arraybuffer'
   })
-  const content = Buffer.from(response.data, 'binary')
+  let content = Buffer.from(response.data, 'binary')
+
+  // Convert the image to webp format
+  content = await sharp(content).webp({ quality: 100 }).toBuffer()
 
   // Generate a SHA-256 hash of the imageURL to use as the filename
-  const filePath = `generated_image_${createHash('sha256').update(imageUrl).digest('hex').substring(0, 8)}.png`;
+  const filePath = `generated_image_${createHash('sha256').update(imageUrl).digest('hex').substring(0, 8)}.webp`;
 
   await client.writeFileInWorkspace(`${threadId ? 'files/' : ''}${filePath}`, content);
 

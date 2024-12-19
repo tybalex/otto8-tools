@@ -74,8 +74,8 @@ system:
     reference: ./workflow
   result-formatter:
     reference: ./result-formatter
-  acorn-model-provider:
-    reference: ./acorn-model-provider
+  obot-model-provider:
+    reference: ./obot-model-provider
 
 modelProviders:
   openai-model-provider:
@@ -86,5 +86,7 @@ modelProviders:
     reference: ./azure-openai-model-provider
   ollama-model-provider:
     reference: ./ollama-model-provider
+  groq-model-provider:
+    reference: ./groq-model-provider
   voyage-model-provider:
     reference: ./voyage-model-provider
