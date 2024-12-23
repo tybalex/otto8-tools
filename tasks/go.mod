@@ -2,7 +2,7 @@ module github.com/obot-platform/tools/tasks
 
 go 1.23.3
 
-require github.com/obot-platform/obot/apiclient v0.0.0-20241217131403-88e078153290
+require github.com/obot-platform/obot/apiclient v0.0.0-20241223000754-8f9ff1b4b14e
 
 require (
 	github.com/getkin/kin-openapi v0.124.0 // indirect

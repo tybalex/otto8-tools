@@ -5,12 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"maps"
 	"os"
-	"slices"
 
 	"github.com/obot-platform/obot/apiclient"
-	"github.com/obot-platform/obot/apiclient/types"
 )
 
 var (
@@ -25,52 +22,16 @@ func main() {
 	ctx := context.Background()
 	if err := mainErr(ctx); err != nil {
 		slog.Error("error", "err", err)
+		os.Exit(1)
 	}
 }
 
-type workflowInfo struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Parameters  []Param `json:"params,omitempty"`
-}
-
-type Param struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type runInfo struct {
-	ID        string      `json:"id"`
-	TaskID    string      `json:"taskID"`
-	StartTime types.Time  `json:"startTime"`
-	EndTime   *types.Time `json:"endTime,omitempty"`
-	Input     string      `json:"input"`
-	Error     string      `json:"error,omitempty"`
-}
-
 func list(ctx context.Context, c *apiclient.Client) error {
-	result, err := c.ListWorkflows(ctx, apiclient.ListWorkflowsOptions{
+	result, err := c.ListTasks(ctx, apiclient.ListTasksOptions{
 		ThreadID: threadID,
 	})
 	if err != nil {
 		return fmt.Errorf("list tasks: %v", err)
-	}
-
-	var output []workflowInfo
-	for _, workflow := range result.Items {
-		info := workflowInfo{
-			ID:          workflow.ID,
-			Name:        workflow.Name,
-			Description: workflow.Description,
-		}
-		for _, k := range slices.Sorted(maps.Keys(workflow.Params)) {
-			info.Parameters = append(info.Parameters, Param{
-				Name:        k,
-				Description: workflow.Params[k],
-			})
-		}
-		output = append(output, info)
 	}
 
 	if len(result.Items) == 0 {
@@ -78,14 +39,14 @@ func list(ctx context.Context, c *apiclient.Client) error {
 		return nil
 	}
 
-	return json.NewEncoder(os.Stdout).Encode(output)
+	return json.NewEncoder(os.Stdout).Encode(result)
 }
 
-func runs(ctx context.Context, c *apiclient.Client, workflowID string) error {
-	if workflowID == "" {
+func runs(ctx context.Context, c *apiclient.Client, taskID string) error {
+	if taskID == "" {
 		return fmt.Errorf("missing task ID")
 	}
-	result, err := c.ListWorkflowExecutions(ctx, workflowID, apiclient.ListWorkflowExecutionsOptions{
+	result, err := c.ListTaskRuns(ctx, taskID, apiclient.ListTaskRunsOptions{
 		ThreadID: threadID,
 	})
 	if err != nil {
@@ -97,19 +58,7 @@ func runs(ctx context.Context, c *apiclient.Client, workflowID string) error {
 		return nil
 	}
 
-	var tasks []runInfo
-	for _, task := range result.Items {
-		tasks = append(tasks, runInfo{
-			ID:        task.ID,
-			TaskID:    workflowID,
-			StartTime: task.StartTime,
-			EndTime:   task.EndTime,
-			Input:     task.Input,
-			Error:     task.Error,
-		})
-	}
-
-	return json.NewEncoder(os.Stdout).Encode(tasks)
+	return json.NewEncoder(os.Stdout).Encode(result)
 }
 
 func run(ctx context.Context, c *apiclient.Client) error {
@@ -117,14 +66,14 @@ func run(ctx context.Context, c *apiclient.Client) error {
 		return fmt.Errorf("missing ID")
 	}
 
-	resp, err := c.Invoke(ctx, id, args, apiclient.InvokeOptions{
-		Async: true,
+	resp, err := c.RunTask(ctx, id, args, apiclient.TaskRunOptions{
+		ThreadID: threadID,
 	})
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("task started: %s\n", resp.ThreadID)
+	fmt.Printf("task started: %s\n", resp.ID)
 	return nil
 }
 
