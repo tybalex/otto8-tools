@@ -24,8 +24,8 @@ github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
-github.com/obot-platform/obot/apiclient v0.0.0-20241217131403-88e078153290 h1:QJMTshcmm8IGkj3MA8p+MM2wRNLHiuq6vT2OOhbN3EA=
-github.com/obot-platform/obot/apiclient v0.0.0-20241217131403-88e078153290/go.mod h1:Cnht4E5XIgQZ+kr43rQUc1KWLnPtF8KPkwJdCChpmUU=
+github.com/obot-platform/obot/apiclient v0.0.0-20241223000754-8f9ff1b4b14e h1:R81Ly5Z5j+uMU1dkqzuRKvthCY9HQVehgLMpkMqg8+o=
+github.com/obot-platform/obot/apiclient v0.0.0-20241223000754-8f9ff1b4b14e/go.mod h1:Cnht4E5XIgQZ+kr43rQUc1KWLnPtF8KPkwJdCChpmUU=
 github.com/obot-platform/obot/logger v0.0.0-20241217130503-4004a5c69f32 h1:PooNaWBm+SVJ5nif7t9eAy/bBgN5r6x2tWW9Za51gKk=
 github.com/obot-platform/obot/logger v0.0.0-20241217130503-4004a5c69f32/go.mod h1:mstAp0dK+o0h8AGcfFjyMOwTc0DgIFnKldBARfYYQzI=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
