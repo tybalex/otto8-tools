@@ -1,6 +1,7 @@
 tools:
   sendgrid:
     reference: ./sendgrid
+    all: true
   database:
     reference: ./database
   atlassian-jira:
@@ -50,6 +51,7 @@ tools:
     all: true
   time:
     reference: ./time
+    all: true
   workspace-files:
     reference: ./workspace-files
   tasks:
@@ -110,3 +112,5 @@ modelProviders:
     reference: ./vllm-model-provider
   anthropic-bedrock-model-provider:
     reference: ./anthropic-bedrock-model-provider
+  xai-model-provider:
+    reference: ./xai-model-provider
