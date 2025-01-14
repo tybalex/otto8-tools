@@ -13,7 +13,7 @@ MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 MAX_WORKERS = 4
-MODEL = os.getenv("MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
+MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
 
 class DocumentSummarizer:
     """
