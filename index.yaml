@@ -2,6 +2,9 @@ tools:
   sendgrid:
     reference: ./sendgrid
     all: true
+  file-summarizer:
+    reference: ./file-summarizer
+    all: true
   database:
     reference: ./database
   atlassian-jira:
