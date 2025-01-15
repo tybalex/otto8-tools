@@ -13,9 +13,7 @@ MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 MAX_WORKERS = 4
-MODEL = os.getenv(
-    "OBOT_DEFAULT_LLM_MODEL", "gpt-4o"
-)  # TODO: this should be the same model from obot user selected model provider.
+MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o")
 # MODEL = "gpt-4o"
 TIKTOKEN_MODEL = "gpt-4o"
 
@@ -40,7 +38,7 @@ class DocumentSummarizer:
     ):
         """
         :param client: An OpenAI() client instance (from openai import OpenAI).
-        :param model: Model name (e.g., 'gpt-4o'), must be valid for encoding_for_model().
+        :param model: Model name (e.g., 'gpt-4o')
         :param max_context_tokens: Maximum context length for GPT-4o (default: 128000).
         :param max_output_tokens: Maximum tokens GPT-4o can generate (default: 16384).
         :param overhead_tokens: Token buffer for system/developer instructions, etc. (default: 2000).
@@ -56,15 +54,15 @@ class DocumentSummarizer:
         self.max_workers = max_workers
         self.verbose = verbose
 
-        # Load the tokenizer for the specified model
+        # always use gpt-4o for tokenization
         self.enc = tiktoken.encoding_for_model(TIKTOKEN_MODEL)
 
-        # Calculate or use provided max chunk size
-        default_chunk_size = (
-            self.max_context_tokens - self.max_output_tokens - self.overhead_tokens
-        )
         self.max_chunk_size = (
-            max_chunk_tokens if max_chunk_tokens is not None else default_chunk_size
+            max_chunk_tokens
+            if max_chunk_tokens is not None
+            else (
+                self.max_context_tokens - self.max_output_tokens - self.overhead_tokens
+            )
         )
 
         if self.max_chunk_size <= 0:
