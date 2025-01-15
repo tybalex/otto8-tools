@@ -13,7 +13,9 @@ MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 MAX_WORKERS = 4
-MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
+MODEL = os.getenv(
+    "OBOT_DEFAULT_LLM_MODEL", "gpt-4o"
+)  # TODO: this should be the same model from obot user selected model provider.
 # MODEL = "gpt-4o"
 TIKTOKEN_MODEL = "gpt-4o"
 
@@ -321,9 +323,6 @@ async def main():
     except Exception as e:
         raise Exception(f"ERROR: Failed to initialize OpenAI client: {e}")
 
-
-
-    # Create summarizer and process document
     summarizer = DocumentSummarizer(
         client,
         model=MODEL,
