@@ -43,13 +43,14 @@ def _prepend_base_path(base_path: str, file_path: str):
 # for gptscript workspace S/L, see https://github.com/gptscript-ai/py-gptscript/blob/main/gptscript/gptscript.py
 async def save_to_gptscript_workspace(filepath: str, content: str) -> None:
     gptscript_client = gptscript.GPTScript()
-    wksp_file_path = _prepend_base_path('files', filepath)
-    await gptscript_client.write_file_in_workspace(wksp_file_path, content.encode('utf-8'))
-    
+    wksp_file_path = _prepend_base_path("files", filepath)
+    await gptscript_client.write_file_in_workspace(
+        wksp_file_path, content.encode("utf-8")
+    )
 
 
 async def load_from_gptscript_workspace(filepath: str) -> str:
     gptscript_client = gptscript.GPTScript()
-    wksp_file_path = _prepend_base_path('files', filepath)
+    wksp_file_path = _prepend_base_path("files", filepath)
     file_content = await gptscript_client.read_file_in_workspace(wksp_file_path)
-    return file_content.decode('utf-8')
+    return file_content.decode("utf-8")

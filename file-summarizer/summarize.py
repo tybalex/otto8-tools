@@ -13,7 +13,9 @@ MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 MAX_WORKERS = 4
-MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
+# MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
+MODEL = "gpt-4o"
+
 
 class DocumentSummarizer:
     """
@@ -98,6 +100,24 @@ class DocumentSummarizer:
 
         return chunks
 
+    def chat_completion(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = MAX_OUTPUT_TOKENS,
+        temperature: float = 0.1,
+    ) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+        return response.choices[0].message.content.strip()
+
     def summarize_chunk(self, chunk: str) -> str:
         """
         Summarizes a single chunk using an intensive, detail-preserving prompt.
@@ -147,15 +167,12 @@ Remember:
 - Keep relationships and dependencies
 """
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+        return self.chat_completion(
+            system_prompt,
+            user_prompt,
             max_tokens=self.max_output_tokens,
+            temperature=0.1,
         )
-        return response.choices[0].message.content.strip()
 
     def summarize_chunks_in_parallel(self, chunks: List[str]) -> List[str]:
         """
@@ -178,7 +195,6 @@ Remember:
             print(f"[DEBUG] Summarized {len(chunks)} chunk(s) in parallel.")
 
         return summaries
-
 
     def final_reduction(self, text: str) -> str:
         """
@@ -215,16 +231,13 @@ You must:
 - Maintain references, relationships, and any structured data
 """
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+        return self.chat_completion(
+            system_prompt,
+            user_prompt,
             max_tokens=self.max_output_tokens,
+            temperature=0.1,
         )
-        return response.choices[0].message.content.strip()
-    
+
     def iterative_summarize(self, text_to_summarize: str) -> str:
         """
         Recursively summarizes the text and merges the summaries until it is reduced to a single (summary) chunk.
@@ -238,9 +251,10 @@ You must:
         # Otherwise, split the text into chunks and summarize them in parallel
         next_level_summaries = self.summarize_chunks_in_parallel(chunks)
         if self.verbose:
-            print(f"[DEBUG] Combining {len(next_level_summaries)} summaries into a new text...")
+            print(
+                f"[DEBUG] Combining {len(next_level_summaries)} summaries into a new text..."
+            )
         return self.iterative_summarize("\n\n".join(next_level_summaries))
-
 
     def summarize(self, document_text: str) -> str:
         """
@@ -255,18 +269,24 @@ You must:
 
 async def main():
     input_file = os.getenv("INPUT_FILE", "")
+    if not input_file.endswith(".md") and not input_file.endswith(".txt"):
+        raise ValueError(
+            "Error: the input file must end with .md or .txt, other file types are not supported yet."
+        )
     if not input_file:
-        raise ValueError("INPUT_FILE environment variable is not set")
+        raise ValueError("Error: INPUT_FILE environment variable is not set")
     try:
         file_content = await load_from_gptscript_workspace(input_file)
     except Exception as e:
-        raise ValueError(f"Failed to load file from GPTScript workspace file {input_file}, Error: {e}")
+        raise ValueError(
+            f"Failed to load file from GPTScript workspace file {input_file}, Error: {e}"
+        )
     if len(file_content) == 0:
-        print("File is empty, skipping summarization")
+        print("Warning: File is empty, skipping summarization")
         return
-    
+
     output_file = os.getenv("OUTPUT_FILE", "")
-    
+
     # Check for OPENAI_API_KEY
     if "OPENAI_API_KEY" not in os.environ:
         sys.exit(
@@ -274,8 +294,7 @@ async def main():
             "Please set it before running the script, e.g.:\n\n"
             "  export OPENAI_API_KEY='sk-xxxxxxx'\n"
         )
-        
-    # This is a must have because we are using the same model as the obot user selected model provider.
+
     if "OPENAI_BASE_URL" not in os.environ:
         sys.exit(
             "ERROR: OPENAI_BASE_URL environment variable not found.\n"
@@ -287,9 +306,17 @@ async def main():
     try:
         from openai import OpenAI
 
-        client = OpenAI(base_url=os.environ["OPENAI_BASE_URL"], api_key=os.environ["OPENAI_API_KEY"])  # Uses OPENAI_API_KEY from environment
+        base_url = os.environ["OPENAI_BASE_URL"]
+        # base_url = "https://api.openai.com/v1"
+        api_key = os.environ["OPENAI_API_KEY"]
+        client = OpenAI(base_url=base_url, api_key=api_key)
     except Exception as e:
         raise Exception(f"ERROR: Failed to initialize OpenAI client: {e}")
+
+    if output_file == "NONE":
+        verbose = False
+    else:
+        verbose = True
 
     # Create summarizer and process document
     summarizer = DocumentSummarizer(
@@ -297,7 +324,7 @@ async def main():
         model=MODEL,
         max_chunk_tokens=MAX_CHUNK_TOKENS,
         max_workers=MAX_WORKERS,
-        verbose=False,
+        verbose=verbose,
     )
 
     try:
@@ -306,15 +333,23 @@ async def main():
         raise Exception(f"ERROR: Summarization failed: {e}")
 
     # Handle output
-    if output_file:
+    if output_file.upper() == "NONE":
+        print(final_summary)
+    else:
+        if output_file == "":
+            directory, file_name = os.path.split(input_file)
+            name, ext = os.path.splitext(file_name)
+            summary_file_name = f"{name}_summary{ext}"
+            output_file = os.path.join(directory, summary_file_name)
+
         try:
             await save_to_gptscript_workspace(output_file, final_summary)
             print(f"Summary written to workspace file: {output_file}")
         except Exception as e:
             print(f"File Summary:\n{final_summary}")
-            raise Exception(f"Failed to save summary to GPTScript workspace file {output_file}, Error: {e}")
-    else:
-        print(final_summary)
+            raise Exception(
+                f"Failed to save summary to GPTScript workspace file {output_file}, Error: {e}"
+            )
 
 
 if __name__ == "__main__":
