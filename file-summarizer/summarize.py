@@ -293,12 +293,12 @@ You must:
 
 async def main():
     input_file = os.getenv("INPUT_FILE", "")
+    if not input_file:
+        raise ValueError("Error: INPUT_FILE environment variable is not set")
     if not input_file.endswith(".md") and not input_file.endswith(".txt"):
         raise ValueError(
             "Error: the input file must end with .md or .txt, other file types are not supported yet."
         )
-    if not input_file:
-        raise ValueError("Error: INPUT_FILE environment variable is not set")
     try:
         file_content = await load_from_gptscript_workspace(input_file)
     except Exception as e:
@@ -316,10 +316,8 @@ async def main():
     else:
         verbose = True
 
-    # Initialize OpenAI client
     try:
         from openai import OpenAI
-
         base_url = os.environ["OPENAI_BASE_URL"]
         # base_url = "https://api.openai.com/v1"
         if verbose:
