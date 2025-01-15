@@ -13,8 +13,9 @@ MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 MAX_WORKERS = 4
-# MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
-MODEL = "gpt-4o"
+MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o") # TODO: this should be the same model from obot user selected model provider.
+# MODEL = "gpt-4o"
+TIKTOKEN_MODEL = "gpt-4o"
 
 
 class DocumentSummarizer:
@@ -54,7 +55,7 @@ class DocumentSummarizer:
         self.verbose = verbose
 
         # Load the tokenizer for the specified model
-        self.enc = tiktoken.encoding_for_model(self.model)
+        self.enc = tiktoken.encoding_for_model(TIKTOKEN_MODEL)
 
         # Calculate or use provided max chunk size
         default_chunk_size = (
@@ -302,21 +303,25 @@ async def main():
             "  export OPENAI_BASE_URL='https://api.openai.com/v1'\n"
         )
 
+    if output_file == "NONE":
+        verbose = False
+    else:
+        verbose = True
+
     # Initialize OpenAI client
     try:
         from openai import OpenAI
 
         base_url = os.environ["OPENAI_BASE_URL"]
         # base_url = "https://api.openai.com/v1"
+        if verbose:
+            print(f"[DEBUG] Using base_url: {base_url}")
         api_key = os.environ["OPENAI_API_KEY"]
         client = OpenAI(base_url=base_url, api_key=api_key)
     except Exception as e:
         raise Exception(f"ERROR: Failed to initialize OpenAI client: {e}")
 
-    if output_file == "NONE":
-        verbose = False
-    else:
-        verbose = True
+
 
     # Create summarizer and process document
     summarizer = DocumentSummarizer(
