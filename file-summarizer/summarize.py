@@ -12,6 +12,7 @@ MAX_CONTEXT_TOKENS = 128000
 MAX_OUTPUT_TOKENS = 16384
 OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
+CHUNK_OVERLAP_TOKENS = 0
 MAX_WORKERS = 4
 MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o")
 # MODEL = "gpt-4o"
@@ -33,6 +34,7 @@ class DocumentSummarizer:
         max_output_tokens: int = MAX_OUTPUT_TOKENS,
         overhead_tokens: int = OVERHEAD_TOKENS,
         max_chunk_tokens: int = MAX_CHUNK_TOKENS,
+        chunk_overlap_tokens: int = CHUNK_OVERLAP_TOKENS,
         max_workers: int = MAX_WORKERS,
         verbose: bool = False,
     ):
@@ -53,6 +55,7 @@ class DocumentSummarizer:
         self.overhead_tokens = overhead_tokens
         self.max_workers = max_workers
         self.verbose = verbose
+        self.chunk_overlap_tokens = chunk_overlap_tokens
 
         # always use gpt-4o for tokenization
         self.enc = tiktoken.encoding_for_model(TIKTOKEN_MODEL)
@@ -91,7 +94,7 @@ class DocumentSummarizer:
             print(f"[DEBUG] Total tokens in document: {len(tokens)}")
             print("[DEBUG] Splitting into chunks...")
 
-        for i in range(0, len(tokens), self.max_chunk_size):
+        for i in range(0, len(tokens), self.max_chunk_size - self.chunk_overlap_tokens):
             chunk_slice = tokens[i : i + self.max_chunk_size]
             chunk_text = self.enc.decode(chunk_slice)
             chunks.append(chunk_text)
