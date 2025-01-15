@@ -97,6 +97,8 @@ system:
     reference: ./docker-shell-id
   docker:
     reference: ./docker
+  tasks-workflow:
+    reference: ./tasks-workflow
 
 modelProviders:
   openai-model-provider:
