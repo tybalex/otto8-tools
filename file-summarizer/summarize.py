@@ -14,7 +14,27 @@ OVERHEAD_TOKENS = 2000
 MAX_CHUNK_TOKENS = MAX_CONTEXT_TOKENS - MAX_OUTPUT_TOKENS - OVERHEAD_TOKENS
 CHUNK_OVERLAP_TOKENS = 0
 MAX_WORKERS = 4
-MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o")
+# Check for OPENAI_API_KEY
+if "OPENAI_API_KEY" not in os.environ:
+    sys.exit(
+        "ERROR: OPENAI_API_KEY environment variable not found.\n"
+        "Please set it before running the script, e.g.:\n\n"
+        "  export OPENAI_API_KEY='sk-xxxxxxx'\n"
+    )
+
+if "OPENAI_BASE_URL" not in os.environ:
+    sys.exit(
+        "ERROR: OPENAI_BASE_URL environment variable not found.\n"
+        "Please set it before running the script, e.g.:\n\n"
+        "  export OPENAI_BASE_URL='https://api.openai.com/v1'\n"
+    )
+if "OBOT_DEFAULT_LLM_MODEL" not in os.environ:
+    sys.exit(
+        "ERROR: OBOT_DEFAULT_LLM_MODEL environment variable not found.\n"
+        "Please set it before running the script, e.g.:\n\n"
+        "  export OBOT_DEFAULT_LLM_MODEL='gpt-4o'\n"
+    )
+MODEL = os.environ["OBOT_DEFAULT_LLM_MODEL"]
 # MODEL = "gpt-4o"
 TIKTOKEN_MODEL = "gpt-4o"
 
@@ -290,21 +310,6 @@ async def main():
         return
 
     output_file = os.getenv("OUTPUT_FILE", "")
-
-    # Check for OPENAI_API_KEY
-    if "OPENAI_API_KEY" not in os.environ:
-        sys.exit(
-            "ERROR: OPENAI_API_KEY environment variable not found.\n"
-            "Please set it before running the script, e.g.:\n\n"
-            "  export OPENAI_API_KEY='sk-xxxxxxx'\n"
-        )
-
-    if "OPENAI_BASE_URL" not in os.environ:
-        sys.exit(
-            "ERROR: OPENAI_BASE_URL environment variable not found.\n"
-            "Please set it before running the script, e.g.:\n\n"
-            "  export OPENAI_BASE_URL='https://api.openai.com/v1'\n"
-        )
 
     if output_file == "NONE":
         verbose = False
