@@ -22,20 +22,7 @@ if "OPENAI_API_KEY" not in os.environ:
         "  export OPENAI_API_KEY='sk-xxxxxxx'\n"
     )
 
-if "OPENAI_BASE_URL" not in os.environ:
-    sys.exit(
-        "ERROR: OPENAI_BASE_URL environment variable not found.\n"
-        "Please set it before running the script, e.g.:\n\n"
-        "  export OPENAI_BASE_URL='https://api.openai.com/v1'\n"
-    )
-if "OBOT_DEFAULT_LLM_MODEL" not in os.environ:
-    sys.exit(
-        "ERROR: OBOT_DEFAULT_LLM_MODEL environment variable not found.\n"
-        "Please set it before running the script, e.g.:\n\n"
-        "  export OBOT_DEFAULT_LLM_MODEL='gpt-4o'\n"
-    )
-MODEL = os.environ["OBOT_DEFAULT_LLM_MODEL"]
-# MODEL = "gpt-4o"
+MODEL = os.getenv("OBOT_DEFAULT_LLM_MODEL", "gpt-4o")
 TIKTOKEN_MODEL = "gpt-4o"
 
 
@@ -318,8 +305,7 @@ async def main():
 
     try:
         from openai import OpenAI
-        base_url = os.environ["OPENAI_BASE_URL"]
-        # base_url = "https://api.openai.com/v1"
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         if verbose:
             print(f"[DEBUG] Using base_url: {base_url}")
         api_key = os.environ["OPENAI_API_KEY"]
