@@ -10,3 +10,9 @@ Metadata: noUserAuth: voyage-model-provider
 ---
 !metadata:*:icon
 https://www.voyageai.com/logo.svg
+
+---
+Name: validate
+Description: Validate Voyage credentials
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/validate.py

@@ -11,3 +11,9 @@ Metadata: noUserAuth: azure-openai-model-provider
 ---
 !metadata:*:icon
 /admin/assets/azure_openai_icon.svg
+
+---
+Name: validate
+Description: Validate Azure OpenAI credentials
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/validate.py
