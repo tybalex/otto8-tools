@@ -13,6 +13,9 @@ tools:
   atlassian-jira:
     reference: ./atlassian/jira
     all: true
+  wordpress:
+    reference: ./wordpress
+    all: true
   excel:
     reference: ./excel
     all: true
