@@ -1,7 +1,9 @@
 import requests
-from tools.helper import WORDPRESS_API_URL, WORDPRESS_OAUTH_TOKEN
+from tools.helper import WORDPRESS_API_URL, WORDPRESS_OAUTH_TOKEN, tool_registry
 
-def get_users():
+
+@tool_registry.register("GetMe")
+def get_me():
     url = f"{WORDPRESS_API_URL}/me"
     headers = {
         "Authorization": f"Bearer {WORDPRESS_OAUTH_TOKEN}"
@@ -10,7 +12,8 @@ def get_users():
     return response.json()
 
 
-def get_user_sites():
+@tool_registry.register("ListMySites")
+def list_my_sites():
     url = f"{WORDPRESS_API_URL}/me/sites"
     headers = {
         "Authorization": f"Bearer {WORDPRESS_OAUTH_TOKEN}"

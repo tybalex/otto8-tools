@@ -1,25 +1,55 @@
 ---
 Name: Wordpress
-Description: Tools for interacting with Wordpress.com
+Description: Tools for interacting with sites in Wordpress.com. 
 Metadata: bundle: true
-Share Tools: GetUsers, GetUserSites
+Share Tools: Get Me, List My Sites, Get Site, List Posts, Create Post
 
 ---
-Name: Get Users
-Description: Get all users in the Wordpress site
-Share Context: Wordpress Context
+Name: Get Me
+Description: get the current user in Wordpress.com
 Credential: ./credential
+Share Context: Wordpress Context
 
-
-#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetUsers
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetMe
 
 ---
-Name: List User Sites
-Description: List all sites for a user
-Share Context: Wordpress Context
+Name: List My Sites
+Description: List all sites for the current user in Wordpress.com
 Credential: ./credential
+Share Context: Wordpress Context
 
-#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListUserSites
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListMySites
+
+---
+Name: Get Site
+Description: Get information about a site in Wordpress.com
+Credential: ./credential
+Share Context: Wordpress Context
+Param: site_id_or_domain: The id or domain of the site
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetSite
+
+---
+Name: Create Post
+Description: Create a post for a site in Wordpress.com
+Credential: ./credential
+Share Context: Wordpress Context
+Param: site_id_or_domain: The id or domain of the site
+Param: title: The title of the post, defaults to "Untitled"
+Param: content: The content of the post, defaults to empty.
+Param: status: The status of the post, defaults to "publish". 
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py CreatePost
+
+---
+Name: List Posts
+Description: List all posts for a site in Wordpress.com
+Credential: ./credential
+Share Context: Wordpress Context
+Param: site_id_or_domain: The id or domain of the site
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListPosts
+
 ---
 Name: Wordpress Context
 Type: context
@@ -38,3 +68,11 @@ Display all dates and times in the user's preferred timezone. When the user give
 ---
 !metadata:*:category
 Wordpress
+
+---
+!metadata:*:icon
+/admin/assets/wordpress-logo.png
+
+---
+!metadata:*:oauth
+wordpress
