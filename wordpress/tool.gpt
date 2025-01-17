@@ -7,16 +7,17 @@ Share Tools: GetUsers, GetUserSites
 ---
 Name: Get Users
 Description: Get all users in the Wordpress site
+Share Context: Wordpress Context
 Credential: ./credential
-Share Tools: Wordpress Context
+
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetUsers
 
 ---
 Name: List User Sites
 Description: List all sites for a user
+Share Context: Wordpress Context
 Credential: ./credential
-Share Tools: Wordpress Context
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListUserSites
 ---
