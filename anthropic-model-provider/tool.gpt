@@ -3,9 +3,17 @@ Description: Model provider for Anthropic hosted Claude3 models
 Metadata: envVars: OBOT_ANTHROPIC_MODEL_PROVIDER_API_KEY
 Model Provider: true
 Credential: ../model-provider-credential as anthropic-model-provider
+Metadata: noUserAuth: anthropic-model-provider
 
 #!sys.daemon /usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py
 
 ---
 !metadata:*:icon
 /admin/assets/anthropic_icon.svg
+
+---
+Name: validate
+Description: Validate Anthropic credentials
+Metadata: envVars: OBOT_ANTHROPIC_MODEL_PROVIDER_API_KEY
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/validate.py
