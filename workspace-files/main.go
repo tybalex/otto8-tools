@@ -17,7 +17,7 @@ const FilesDir = "files"
 
 var (
 	FileEnv     = os.Getenv("FILENAME")
-	MaxFileSize = 1 << 16
+	MaxFileSize = 250_000
 )
 
 func main() {
