@@ -4,6 +4,9 @@ tools:
     all: true
   database:
     reference: ./database
+  zoom:
+    reference: ./zoom
+    all: true
   atlassian-jira:
     reference: ./atlassian/jira
     all: true
