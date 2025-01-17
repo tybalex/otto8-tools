@@ -8,23 +8,24 @@ import (
 )
 
 func main() {
-	apiKey := os.Getenv("OBOT_DEEPSEEK_MODEL_PROVIDER_API_KEY")
+	apiKey := os.Getenv("OBOT_GROQ_MODEL_PROVIDER_API_KEY")
 	if apiKey == "" {
-		fmt.Fprintln(os.Stderr, "OBOT_DEEPSEEK_MODEL_PROVIDER_API_KEY environment variable not set")
+		fmt.Fprintln(os.Stderr, "OBOT_GROQ_MODEL_PROVIDER_API_KEY environment variable not set")
 		os.Exit(1)
 	}
 
 	cfg := &proxy.Config{
 		APIKey:          apiKey,
 		Port:            os.Getenv("PORT"),
-		UpstreamHost:    "api.deepseek.com",
+		UpstreamHost:    "api.groq.com",
 		UseTLS:          true,
 		RewriteModelsFn: proxy.RewriteAllModelsWithUsage("llm"),
-		Name:            "DeepSeek",
+		PathPrefix:      "/openai",
+		Name:            "Groq",
 	}
 
 	if len(os.Args) > 1 && os.Args[1] == "validate" {
-		if err := cfg.Validate("/tools/deepseek-model-provider/validate"); err != nil {
+		if err := cfg.Validate("/tools/groq-model-provider/validate"); err != nil {
 			os.Exit(1)
 		}
 		return
