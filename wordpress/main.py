@@ -1,4 +1,6 @@
-from tools.users import get_users, get_user_sites
+from tools import posts, users, sites # import to register tools
+from tools.helper import tool_registry
+import json
 import sys
 
 def main():
@@ -7,16 +9,13 @@ def main():
         sys.exit(1)
 
     command = sys.argv[1]
-    match command:
-        case "GetUsers":
-            users = get_users()
-            print(users)
-        case "ListUserSites":
-            sites = get_user_sites()
-            print(sites)
-        case _:
-            print("Invalid command")
-            sys.exit(1)
+    try:
+        json_response = tool_registry.get(command)()
+        print(json.dumps(json_response, indent=4))
+    except Exception as e:
+        print(f"Running command: {' '.join(sys.argv)} yielded error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
+
