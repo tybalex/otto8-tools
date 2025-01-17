@@ -3,9 +3,16 @@ Description: Model provider for Voyage Embeddings
 Metadata: envVars: OBOT_VOYAGE_MODEL_PROVIDER_API_KEY
 Model Provider: true
 Credential: ../model-provider-credential as voyage-model-provider
+Metadata: noUserAuth: voyage-model-provider
 
 #!sys.daemon /usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py
 
 ---
 !metadata:*:icon
 https://www.voyageai.com/logo.svg
+
+---
+Name: validate
+Description: Validate Voyage credentials
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/validate.py
