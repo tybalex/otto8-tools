@@ -176,6 +176,10 @@ You can use this tool to interact with Zoom with Zoom APIs.
 Zoom
 
 ---
+!metadata:*:icon
+/admin/assets/zoom_logo.svg
+
+---
 !metadata:*:oauth
 zoom
 
