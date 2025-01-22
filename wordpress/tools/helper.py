@@ -1,7 +1,66 @@
+import requests
 import os
+from requests.auth import HTTPBasicAuth
+from datetime import datetime
 
-WORDPRESS_API_URL = "https://public-api.wordpress.com/rest/v1.1"
-WORDPRESS_OAUTH_TOKEN = os.environ["WORDPRESS_OAUTH_TOKEN"]
+if "WORDPRESS_USERNAME" not in os.environ:
+    raise ValueError("WORDPRESS_USERNAME is not set")
+
+if "WORDPRESS_PASSWORD" not in os.environ:
+    raise ValueError("WORDPRESS_PASSWORD is not set")
+
+if "WORDPRESS_SITE" not in os.environ:
+    raise ValueError("WORDPRESS_SITE is not set")
+
+username = os.environ["WORDPRESS_USERNAME"]
+password = os.environ["WORDPRESS_PASSWORD"]
+
+
+WORDPRESS_BASIC_AUTH = HTTPBasicAuth(username, password)
+
+WORDPRESS_SITE = os.environ["WORDPRESS_SITE"]
+WORDPRESS_API_PATH = "/wp-json/wp/v2"
+
+
+def clean_wordpress_site_url(site_url):
+
+    if not site_url.startswith("https://") and not site_url.startswith("http://"):
+        raise ValueError(
+            f"Error: Invalid site URL: {site_url}. No scheme supplied, must start with protocol, e.g. https:// or http://"
+        )
+
+    site_url = site_url.rstrip("/")
+    if site_url.endswith("/wp-json"):
+        site_url = site_url.split("/wp-json")[0]
+
+    site_url = site_url + WORDPRESS_API_PATH
+    return site_url
+
+
+WORDPRESS_API_URL = clean_wordpress_site_url(WORDPRESS_SITE)
+
+
+def is_valid_iso8601(date_string):
+    try:
+        datetime.fromisoformat(date_string)
+        return True
+    except ValueError:
+        return False
+
+
+def str_to_bool(value):
+    """Convert a string to a boolean."""
+    return str(value).lower() in ("true", "1", "yes")
+
+
+def create_session():
+    session = requests.Session()
+    session.auth = WORDPRESS_BASIC_AUTH
+    headers = {
+        "User-Agent": "curl",
+    }
+    session.headers.update(headers)
+    return session
 
 
 class ToolRegistry:
