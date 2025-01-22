@@ -1,16 +1,106 @@
 ---
 Name: Wordpress
-Description: Tools for interacting with sites in Wordpress.com. 
+Description: Tools for interacting with User's WordPress Site
 Metadata: bundle: true
-Share Tools: 
+Share Tools: List Users, Get User, List Posts, Retrieve Post, Create Post, Update Post, Delete Post
 
 ---
-Name: Get Me
-Description: get the current user in Wordpress.com
+Name: List Users
+Description: List users in wordpress site
 Credential: ./credential
 Share Context: Wordpress Context
 
-#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetMe
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListUsers
+
+---
+Name: Get User
+Description: Get the metadata of a user in wordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+Param: user_id: the id of the user to get
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetUser
+
+---
+Name: List Posts
+Description: List posts in wordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+Param: context: the context of the posts to list, must be one of: view, embed, edit, default is view
+Param: page: the page number to list, default is 1
+Param: per_page: the number of posts per page to list, default is 10
+Param: author_ids: a list of comma separated author ids, default is None
+Param: search_query: the search query to filter posts, default is None
+Param: statuses: a comma separated list of statuses to filter posts, default is publish. Valid statuses are: publish, future, draft, pending, private, trash, auto-draft, inherit, request-pending, request-confirmed, request-failed, request-completed
+Param: publish_after: the date and time to filter posts published after, default is None
+Param: publish_before: the date and time to filter posts published before, default is None
+Param: modified_after: the date and time to filter posts modified after, default is None
+Param: modified_before: the date and time to filter posts modified before, default is None
+Param: order: the order to sort posts, must be one of: asc, desc, default is desc.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ListPosts
+
+---
+Name: Retrieve Post
+Description: Retrieve a post in wordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+Param: post_id: the id of the post
+Param: context: the context of the post, must be one of: view, embed, edit, default is view
+Param: password: the password of the post, default is None
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py RetrievePost
+
+---
+Name: Create Post
+Description: Create a post in user'swordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+Param: title: the title of the post
+Param: content: the content of the post
+Param: status: the status of the post, must be one of: publish, future, draft, pending, private
+Param: comment_status: the comment status of the post, must be one of: open, closed. default is open
+Param: sticky: whether the post is sticky to the top of the page, default is false
+Param: password: the password of the post, default is None
+Param: slug: the slug of the post, default is None
+Param: date: the date of the post, default is None. Must be a valid ISO 8601 date string, in the format of YYYY-MM-DDTHH:MM:SS, or YYYY-MM-DDTHH:MM:SS+HH:MM for timezone aware date. If the date is a future date, the post will be scheduled to be published at that time.
+Param: format: the format of the post to create, must be one of: standard, aside, chat, gallery, link, image, quote, status, video, audio. default is standard
+Param: author_id: the id of the author of the post. If not provided, the current user will be used.
+Param: excerpt: the excerpt of the post, default is None
+Param: ping_status: the ping status of the post, must be one of: open, closed. default is open
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py CreatePost
+
+---
+Name: Update Post
+Description: Update a post in user's wordpress site. Only the fields that are provided will be updated.
+Credential: ./credential
+Share Context: Wordpress Context
+Param: post_id: the id of the post to update
+Param: title: the title of the post
+Param: content: the content of the post
+Param: status: the status of the post, must be one of: publish, future, draft, pending, private
+Param: comment_status: the comment status of the post, must be one of: open, closed
+Param: sticky: whether the post is sticky to the top of the page
+Param: password: the password of the post
+Param: slug: the slug of the post
+Param: date: the date of the post, default is None. Must be a valid ISO 8601 date string, in the format of YYYY-MM-DDTHH:MM:SS, or YYYY-MM-DDTHH:MM:SS+HH:MM for timezone aware date. If the date is a future date, the post will be scheduled to be published at that time.
+Param: format: the format of the post to create, must be one of: standard, aside, chat, gallery, link, image, quote, status, video, audio. default is standard
+Param: author_id: the id of the author of the post
+Param: excerpt: the excerpt of the post
+Param: ping_status: the ping status of the post, must be one of: open, closed
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py UpdatePost
+
+---
+Name: Delete Post
+Description: Delete a post in user's wordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+Param: post_id: the id of the post to delete
+Param: force: whether to force delete the post, default is false. If true, the post will be deleted permanently, instead of being moved to trash.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py DeletePost
 
 ---
 Name: Wordpress Context
