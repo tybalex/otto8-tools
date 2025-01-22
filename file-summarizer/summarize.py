@@ -133,14 +133,14 @@ class DocumentSummarizer:
         """
         Summarizes a single chunk using an intensive, detail-preserving prompt.
         """
-        system_prompt = """You are an expert in information preservation and technical documentation.
-Your task is to create a dense, detailed retention of the input content.
+        system_prompt = f"""You are an expert in information preservation and technical documentation.
+Your task is to create a dense, detailed retention of the input content with less than {self.max_output_tokens // 2} words.
 
 Critical rules:
 
 1. PRESERVE ALL:
    - Technical specifications, numbers, and measurements
-   - Names, identifiers, key terms
+   - Names, identifiers, key terms, numeric/technical data
    - Procedural steps and sequences
    - Relationships and dependencies
    - Configuration details and parameters
@@ -163,19 +163,11 @@ Critical rules:
 
 3. Use direct quotes where precision matters
 4. Maintain hierarchical structure if it exists
-5. Preserve all numeric/technical data
-6. Keep lists, tables, or structured data in original format if feasible"""
+5. Keep lists, tables, or structured data in original format if feasible"""
 
-        user_prompt = f"""Analyze and preserve this content with maximum detail:
+        user_prompt = f"""content to summarize:
 
 {chunk}
-
-Remember:
-- Maintain original structure
-- Retain all numeric values
-- Include complete lists/tables
-- Use quotes for critical data
-- Keep relationships and dependencies
 """
 
         return self.chat_completion(
@@ -212,35 +204,28 @@ Remember:
         Produces a final, consolidated version of the retained information.
         Maintains maximum detail in a cohesive format.
         """
-        system_prompt = """You are creating the final consolidated version of preserved information. 
-Preserve maximum detail and maintain a cohesive structure.
+
+        system_prompt = f"""You are creating the final consolidated summary of preserved information.
+Preserve maximum detail and maintain a cohesive structure. You response MUST contain less than {self.max_output_tokens // 2} words.
 
 Requirements:
 
 1. DO NOT summarize away critical details
-2. Keep ALL:
+2. Use markdown for clarity
+3. Preserve essential formatting
+4. Keep direct quotes intact while not violating the word limit.
+5. Maintain references, relationships, and any structured data if possible.
+6. Keep ALL:
    - Technical specs, numeric values
    - Names and IDs
    - Procedural steps
    - Configuration details
    - Interrelationships
-
-3. Use markdown for clarity
-4. Preserve essential formatting
-5. Keep direct quotes intact
 """
 
-        user_prompt = f"""Consolidate the following retention text into a single, cohesive document, 
-while preserving all critical information:
+        user_prompt = f"""content to summarize:
 
-{text}
-
-You must:
-- Retain specificity
-- Keep numeric values
-- Use direct quotes where originally present
-- Maintain references, relationships, and any structured data
-"""
+{text}"""
 
         return self.chat_completion(
             system_prompt,
