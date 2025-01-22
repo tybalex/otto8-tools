@@ -2,7 +2,7 @@
 Name: Wordpress
 Description: Tools for interacting with User's self-hosted WordPress Site
 Metadata: bundle: true
-Share Tools: List Users, Get User, List Posts, Retrieve Post, Create Post, Update Post, Delete Post
+Share Tools: List Users, Get User, List Posts, Retrieve Post, Create Post, Update Post, Delete Post, Get Site Settings
 
 ---
 Name: List Users
@@ -50,6 +50,14 @@ Param: context: (optional) the context of the post, must be one of: view, embed,
 Param: password: (optional) the password of the post, default is None
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py RetrievePost
+
+---
+Name: Get Site Settings
+Description: Get the settings of the wordpress site
+Credential: ./credential
+Share Context: Wordpress Context
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetSiteSettings
 
 ---
 Name: Create Post
@@ -119,7 +127,7 @@ Display all dates and times in the user's preferred timezone. When the user give
 
 ---
 !metadata:*:category
-Wordpress
+WordPress
 
 ---
 !metadata:*:icon
