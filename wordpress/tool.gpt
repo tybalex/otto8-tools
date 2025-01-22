@@ -124,7 +124,3 @@ Wordpress
 ---
 !metadata:*:icon
 /admin/assets/wordpress-logo.png
-
----
-!metadata:*:oauth
-wordpress
