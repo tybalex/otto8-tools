@@ -22,6 +22,8 @@ type input struct {
 	UsernameEnv     string `json:"username_env,omitempty"`
 	PasswordField   string `json:"password_field,omitempty"`
 	PasswordEnv     string `json:"password_env,omitempty"`
+	URLField        string `json:"url_field,omitempty"`
+	URLEnv          string `json:"url_env,omitempty"`
 	Metadata        map[string]string
 }
 
@@ -48,7 +50,21 @@ func main() {
 		fmt.Println("Error getting credentials:", err)
 		os.Exit(1)
 	}
-	fmt.Printf(`{"env": {"%s": "%s", "%s": "%s"}}`, in.UsernameEnv, username, in.PasswordEnv, password)
+
+	var url string
+	if in.URLField != "" && in.URLEnv != "" {
+		url, err = getURL(ctx, in)
+		if err != nil {
+			fmt.Println("Error getting URL:", err)
+			os.Exit(1)
+		}
+	}
+
+	if in.URLEnv != "" {
+		fmt.Printf(`{"env": {"%s": "%s", "%s": "%s", "%s": "%s"}}`, in.UsernameEnv, username, in.PasswordEnv, password, in.URLEnv, url)
+	} else {
+		fmt.Printf(`{"env": {"%s": "%s", "%s": "%s"}}`, in.UsernameEnv, username, in.PasswordEnv, password)
+	}
 }
 
 func getCredentials(ctx context.Context, in input) (string, string, error) {
@@ -85,7 +101,41 @@ func getCredentials(ctx context.Context, in input) (string, string, error) {
 	password := gjson.Get(res, in.PasswordField).String()
 
 	return username, password, nil
+}
 
+func getURL(ctx context.Context, in input) (string, error) {
+	client, err := gptscript.NewGPTScript()
+	if err != nil {
+		fmt.Println("Error creating GPTScript client:", err)
+		return "", fmt.Errorf("Error creating GPTScript client: %w", err)
+	}
+	defer client.Close()
+
+	sysPromptIn, err := json.Marshal(sysPromptInput{
+		Message:   in.Message,
+		Fields:    strings.Join([]string{in.UsernameField, in.PasswordField, in.URLField}, ","),
+		Sensitive: strconv.FormatBool(true),
+		Metadata:  in.Metadata,
+	})
+	if err != nil {
+		return "", fmt.Errorf("Error marshalling sys prompt input: %w", err)
+	}
+
+	run, err := client.Run(ctx, "sys.prompt", gptscript.Options{
+		Input: string(sysPromptIn),
+	})
+	if err != nil {
+		return "", fmt.Errorf("Error running GPTScript prompt: %w", err)
+	}
+
+	res, err := run.Text()
+	if err != nil {
+		return "", fmt.Errorf("Error getting GPTScript response: %w", err)
+	}
+
+	url := gjson.Get(res, in.URLField).String()
+
+	return url, nil
 }
 
 func getInput() (input, error) {
@@ -112,6 +162,7 @@ func getInput() (input, error) {
 	in.ToolDisplayName = cleanField(in.ToolDisplayName, "Basic Auth Credential")
 	in.UsernameField = cleanField(in.UsernameField, "username")
 	in.PasswordField = cleanField(in.PasswordField, "password")
+	in.URLField = cleanField(in.URLField, "")
 
 	// Set environment variables and validate
 	var validEnvPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
@@ -134,6 +185,13 @@ func getInput() (input, error) {
 	in.PasswordEnv, err = cleanEnv(in.PasswordEnv, in.PasswordField)
 	if err != nil {
 		return input{}, err
+	}
+
+	if in.URLField != "" {
+		in.URLEnv, err = cleanEnv(in.URLEnv, in.URLField)
+		if err != nil {
+			return input{}, err
+		}
 	}
 
 	in.Message = fmt.Sprintf("Enter your %s and %s", in.UsernameField, in.PasswordField)
