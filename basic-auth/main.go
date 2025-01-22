@@ -45,19 +45,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	username, password, err := getCredentials(ctx, in)
+	username, password, url, err := getCredentials(ctx, in)
 	if err != nil {
-		fmt.Println("Error getting credentials:", err)
+		fmt.Println("Error getting credentials and URL:", err)
 		os.Exit(1)
-	}
-
-	var url string
-	if in.URLField != "" && in.URLEnv != "" {
-		url, err = getURL(ctx, in)
-		if err != nil {
-			fmt.Println("Error getting URL:", err)
-			os.Exit(1)
-		}
 	}
 
 	if in.URLEnv != "" {
@@ -67,75 +58,49 @@ func main() {
 	}
 }
 
-func getCredentials(ctx context.Context, in input) (string, string, error) {
+func getCredentials(ctx context.Context, in input) (string, string, string, error) {
 	client, err := gptscript.NewGPTScript()
 	if err != nil {
 		fmt.Println("Error creating GPTScript client:", err)
-		return "", "", fmt.Errorf("Error creating GPTScript client: %w", err)
+		return "", "", "", fmt.Errorf("Error creating GPTScript client: %w", err)
 	}
 	defer client.Close()
 
+	fields := []string{in.UsernameField, in.PasswordField}
+	if in.URLField != "" {
+		fields = append(fields, in.URLField)
+	}
+
 	sysPromptIn, err := json.Marshal(sysPromptInput{
 		Message:   in.Message,
-		Fields:    strings.Join([]string{in.UsernameField, in.PasswordField}, ","),
+		Fields:    strings.Join(fields, ","),
 		Sensitive: strconv.FormatBool(true),
 		Metadata:  in.Metadata,
 	})
 	if err != nil {
-		return "", "", fmt.Errorf("Error marshalling sys prompt input: %w", err)
+		return "", "", "", fmt.Errorf("Error marshalling sys prompt input: %w", err)
 	}
 
 	run, err := client.Run(ctx, "sys.prompt", gptscript.Options{
 		Input: string(sysPromptIn),
 	})
 	if err != nil {
-		return "", "", fmt.Errorf("Error running GPTScript prompt: %w", err)
+		return "", "", "", fmt.Errorf("Error running GPTScript prompt: %w", err)
 	}
 
 	res, err := run.Text()
 	if err != nil {
-		return "", "", fmt.Errorf("Error getting GPTScript response: %w", err)
+		return "", "", "", fmt.Errorf("Error getting GPTScript response: %w", err)
 	}
 
 	username := gjson.Get(res, in.UsernameField).String()
 	password := gjson.Get(res, in.PasswordField).String()
-
-	return username, password, nil
-}
-
-func getURL(ctx context.Context, in input) (string, error) {
-	client, err := gptscript.NewGPTScript()
-	if err != nil {
-		fmt.Println("Error creating GPTScript client:", err)
-		return "", fmt.Errorf("Error creating GPTScript client: %w", err)
-	}
-	defer client.Close()
-
-	sysPromptIn, err := json.Marshal(sysPromptInput{
-		Message:   in.Message,
-		Fields:    strings.Join([]string{in.UsernameField, in.PasswordField, in.URLField}, ","),
-		Sensitive: strconv.FormatBool(true),
-		Metadata:  in.Metadata,
-	})
-	if err != nil {
-		return "", fmt.Errorf("Error marshalling sys prompt input: %w", err)
+	url := ""
+	if in.URLField != "" {
+		url = gjson.Get(res, in.URLField).String()
 	}
 
-	run, err := client.Run(ctx, "sys.prompt", gptscript.Options{
-		Input: string(sysPromptIn),
-	})
-	if err != nil {
-		return "", fmt.Errorf("Error running GPTScript prompt: %w", err)
-	}
-
-	res, err := run.Text()
-	if err != nil {
-		return "", fmt.Errorf("Error getting GPTScript response: %w", err)
-	}
-
-	url := gjson.Get(res, in.URLField).String()
-
-	return url, nil
+	return username, password, url, nil
 }
 
 func getInput() (input, error) {
