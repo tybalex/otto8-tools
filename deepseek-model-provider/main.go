@@ -1,34 +1,36 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/obot-platform/tools/deepseek-model-provider/server"
-	"github.com/obot-platform/tools/deepseek-model-provider/validate"
+	"github.com/obot-platform/tools/openai-model-provider/proxy"
 )
 
 func main() {
 	apiKey := os.Getenv("OBOT_DEEPSEEK_MODEL_PROVIDER_API_KEY")
 	if apiKey == "" {
-		validate.PrintError("OBOT_DEEPSEEK_MODEL_PROVIDER_API_KEY environment variable not set")
+		fmt.Fprintln(os.Stderr, "OBOT_DEEPSEEK_MODEL_PROVIDER_API_KEY environment variable not set")
 		os.Exit(1)
 	}
 
-	args := os.Args[1:]
-	if len(args) == 1 && args[0] == "validate" {
-		if err := validate.Run(apiKey); err != nil {
-			validate.PrintError(err.Error())
+	cfg := &proxy.Config{
+		APIKey:          apiKey,
+		Port:            os.Getenv("PORT"),
+		UpstreamHost:    "api.deepseek.com",
+		UseTLS:          true,
+		RewriteModelsFn: proxy.RewriteAllModelsWithUsage("llm"),
+		Name:            "DeepSeek",
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "validate" {
+		if err := cfg.Validate("/tools/deepseek-model-provider/validate"); err != nil {
 			os.Exit(1)
 		}
-		os.Exit(0)
+		return
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
-	}
-
-	if err := server.Run(apiKey, port); err != nil {
+	if err := proxy.Run(cfg); err != nil {
 		panic(err)
 	}
 }

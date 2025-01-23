@@ -35,4 +35,6 @@ func main() {
 	}
 
 	fmt.Printf("START WORKFLOW INPUT:\n%s\nEND WORKFLOW INPUT\n\n", inputText)
+
+	fmt.Printf("START WORKFLOW INSTRUCTIONS:\n%s\nEND WORKFLOW INSTRUCTIONS\n\n", `You are running as part of a headless workflow. Do not ask the user for confirmation. If the given task fails, attempt to determine why.`)
 }

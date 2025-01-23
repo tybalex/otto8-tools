@@ -1,19 +1,14 @@
 Name: Docker Shell ID
-Description: Launches a shell using docker for the specific obot thread and returns the container ID.
+Description: Launches a shell using docker for the specific obot workspace and returns the container ID.
 Params: start: Set to false to just get the ID and not start the container. (optional)
 
 #!/bin/bash
 set -e
 
-ID=$OBOT_THREAD_ID
+ID=$(echo $GPTSCRIPT_WORKSPACE_ID | shasum -a 256 | awk '{print $1}')
 
-if [ -z "$ID" ]; then
-    echo "OBOT_THREAD_ID is not set"
-    exit 1
-fi
-
-# Find docker container from thread.obot.ai label
-CID=$(docker ps -qa --filter label=thread.obot.ai="$ID")
+# Find docker container from shell.obot.ai label
+CID=$(docker ps -qa --filter label=shell.obot.ai="$ID")
 
 if [ -n "$CID" ]; then
     if [ "${START}" = "false" ]; then
@@ -30,14 +25,11 @@ if [ -n "$OBOT_THREAD_ENVS" ]; then
     done
 fi
 
-DATADIR=$(echo "$GPTSCRIPT_WORKSPACE_ID" | sed 's!directory://!!')
-if [ -d "$DATADIR" ]; then
-    OBOT_SHELL_RUN_ARGS="${OBOT_SHELL_RUN_ARGS} -v ${DATADIR}/files:/mnt/data"
-fi
+source ${GPTSCRIPT_TOOL_DIR}/../docker/volumes.sh
 
 CMD="run -d"
 if [ "${START}" = "false" ]; then
     CMD=create
 fi
 
-docker $CMD --rm --label thread.obot.ai="$ID" --name "obot-shell-$ID" -q -it ${OBOT_SHELL_RUN_ARGS} ${OBOT_SHELL_IMAGE:-alpine}
+docker $CMD --rm --label shell.obot.ai="$ID" --label "user.obot.ai=${OBOT_USER_ID}" --name "obot-shell-${OBOT_USER_ID}-${RANDOM}" -q -it ${OBOT_VOLUMES} ${OBOT_SHELL_RUN_ARGS} ${OBOT_SHELL_IMAGE:-alpine}

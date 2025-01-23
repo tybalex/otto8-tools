@@ -2,6 +2,9 @@ tools:
   sendgrid:
     reference: ./sendgrid
     all: true
+  file-summarizer:
+    reference: ./file-summarizer
+    all: true
   database:
     reference: ./database
   zoom:
@@ -22,9 +25,6 @@ tools:
   bluesky:
     reference: ./bluesky
     all: true
-  salesforce:
-    reference: ./salesforce
-    all: true
   slack:
     reference: ./slack
     all: true
@@ -42,6 +42,9 @@ tools:
     all: true
   google-sheets:
     reference: ./google/sheets
+    all: true
+  gitlab:
+    reference: ./gitlab
     all: true
   images:
     reference: ./images
@@ -100,14 +103,14 @@ system:
     reference: ./docker-shell-id
   docker:
     reference: ./docker
+  tasks-workflow:
+    reference: ./tasks-workflow
 
 modelProviders:
   openai-model-provider:
     reference: ./openai-model-provider
   anthropic-model-provider:
     reference: ./anthropic-model-provider
-  azure-openai-model-provider:
-    reference: ./azure-openai-model-provider
   ollama-model-provider:
     reference: ./ollama-model-provider
   groq-model-provider:
@@ -116,9 +119,13 @@ modelProviders:
     reference: ./voyage-model-provider
   vllm-model-provider:
     reference: ./vllm-model-provider
-  anthropic-bedrock-model-provider:
-    reference: ./anthropic-bedrock-model-provider
   xai-model-provider:
     reference: ./xai-model-provider
   deepseek-model-provider:
     reference: ./deepseek-model-provider
+
+authProviders:
+  github-auth-provider:
+    reference: ./github-auth-provider
+  google-auth-provider:
+    reference: ./google-auth-provider
