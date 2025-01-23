@@ -1,4 +1,4 @@
-from tools import posts, users, site  # import to register tools
+from tools import posts, users, site # import to register tools
 from tools.helper import tool_registry, create_session
 import json
 import sys
