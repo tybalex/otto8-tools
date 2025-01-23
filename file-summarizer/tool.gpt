@@ -1,3 +1,4 @@
+---
 Name: File Summarizer
 Description: This tool summarizes the input file in the workspace, returns a text summary of the file content, either write to a file in the workspace or print to the console.
 Credential: sys.model.provider.credential
@@ -9,7 +10,7 @@ Params: output_file: (Optional) Name of the file to save the summary, default to
 
 ---
 !metadata:*:category
-Utilities
+AI Summarization
 
 ---
 !metadata:*:icon
