@@ -1,15 +1,22 @@
 Name: File Summarizer
+Tools: github.com/obot-platform/tools/knowledge/load.gpt, Summarize
+Description: This tool summarizes the input file in the workspace, returns a text summary of the file content, either write to a file in the workspace or print to the console.
+Params: input_file: (Required) Name of the file in the workspace to summarize.
+Params: output_file: (Optional) Name of the file to save the summary, default to empty string. If not provided, a summary file will be created in the same directory as the input file. To print to the console, set this to "NONE".
+
+If the input file is a Markdown (.md) or Plaintext (.txt) file, pass it directly to the Summarize tool using the same input_file and output_file parameters you got.
+If it's any other file format, first pass it to the "Knowledge Load" tool. The output param of the knowledge load tool should be the same as your input_file param, but with the extension replaced with ".json".
+The output param of the knowledge load tool should then become the input_file param of the summarize tool. 
+
+---
+
+Name: Summarize
 Description: This tool summarizes the input file in the workspace, returns a text summary of the file content, either write to a file in the workspace or print to the console.
 Credential: sys.model.provider.credential
 Params: input_file: (Required) Name of the file in the workspace to summarize. Only .txt and .md files are supported, for any other file types, simply say it's not supported yet.
 Params: output_file: (Optional) Name of the file to save the summary, default to empty string. If not provided, a summary file will be created in the same directory as the input file. To print to the console, set this to "NONE".
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/summarize.py
-
-
----
-!metadata:*:category
-Utilities
 
 ---
 !metadata:*:icon
