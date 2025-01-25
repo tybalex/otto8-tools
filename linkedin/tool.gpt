@@ -1,0 +1,39 @@
+---
+Name: LinkedIn
+Description: Tools for interacting with LinkedIn APIs
+Metadata: bundle: true
+Share Tools: Get Current User
+
+---
+Name: Get Current User
+Description: Get the current user of the LinkedIn account
+Credential: ./credential
+Share Context: LinkedIn Context
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetCurrentUser
+
+---
+Name: LinkedIn Context
+Type: context
+Share Context: ../time
+
+#!sys.echo
+
+# Instructions for using LinkedIn tools
+
+You can use this tool to interact with LinkedIn with LinkedIn APIs.
+
+# End of instructions for using LinkedIn tools
+
+---
+!metadata:*:category
+LinkedIn
+
+---
+!metadata:*:icon
+/admin/assets/linkedin_icon.png
+
+---
+!metadata:*:oauth
+linkedin
+
