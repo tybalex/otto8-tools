@@ -1,6 +1,8 @@
 import os
 
-ACCESS_TOKEN = os.getenv("LINKEDIN_TOKEN")
+ACCESS_TOKEN = os.getenv("LINKEDIN_OAUTH_TOKEN")
+if ACCESS_TOKEN is None or ACCESS_TOKEN == "":
+    raise Exception("Error: LINKEDIN_OAUTH_TOKEN is not set properly.")
 
 def str_to_bool(value):
     """Convert a string to a boolean."""

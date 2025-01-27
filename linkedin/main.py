@@ -1,5 +1,5 @@
 from linkedin_api.clients.restli.client import RestliClient
-from tools import users
+from tools import users, posts
 from tools.helper import tool_registry
 import json
 import sys
