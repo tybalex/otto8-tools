@@ -58,7 +58,20 @@ def create_post(client: RestliClient):
                     }
                 ]
         elif share_media_category == "IMAGE":
-            pass
+            upload_url, asset = register_upload(client)
+            upload_file("test.png", upload_url)
+            media_payload = [
+                {
+                    "status": "READY",
+                    "description": {
+                        "text": description
+                    },
+                    "media": asset,
+                    "title": {
+                        "text": title
+                    }
+                }
+            ]
         
         payload["specificContent"]["com.linkedin.ugc.ShareContent"]["media"] = media_payload
         
@@ -74,10 +87,55 @@ def create_post(client: RestliClient):
     return response.entity
 
 
-@tool_registry.register_tool("GetPosts")
-def get_posts(client: RestliClient):
-    response = client.get(
-        resource_path="/ugcPosts",
-        access_token=ACCESS_TOKEN
-    )
-    return response.entity
+import requests
+
+def register_upload(client: RestliClient):
+    url = "https://api.linkedin.com/v2/assets?action=registerUpload"
+    
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    
+    # File metadata could include information like file type, size, etc.
+    user_id = get_user(client)['sub']
+    data ={
+    "registerUploadRequest": {
+        "recipes": [
+            "urn:li:digitalmediaRecipe:feedshare-image" # or live-video
+        ],
+        "owner": f"urn:li:person:{user_id}",
+        "serviceRelationships": [
+            {
+                "relationshipType": "OWNER",
+                "identifier": "urn:li:userGeneratedContent"
+            }
+        ]
+        }
+    }
+    
+    # Send POST request
+    response = requests.post(url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        response_json = response.json()
+        return response_json['value']["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"], response_json["value"]["asset"]
+    else:
+        return {"error": response.text}
+
+
+def upload_file(file_path,  upload_url):
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/octet-stream"
+    }
+    
+    # Open the file in binary mode and read its content
+    with open(file_path, 'rb') as file:
+        # Upload the file using POST with file data
+        data = file.read()  
+        response = requests.post(upload_url, headers=headers, data=data)
+
+    if response.status_code != 201:
+        raise ValueError(f"Error: failed to upload file. Status code: {response.status_code}. Response: {response.text}")
+    return response.status_code
