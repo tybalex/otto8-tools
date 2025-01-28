@@ -1,28 +1,32 @@
-from tools.helper import tool_registry, ACCESS_TOKEN
+from tools.helper import tool_registry, ACCESS_TOKEN, load_from_gptscript_workspace
 from linkedin_api.clients.restli.client import RestliClient
 from tools.users import get_user
 import os
 import json
 
 @tool_registry.register_tool("CreatePost")
-def create_post(client: RestliClient):
+async def create_post(client: RestliClient):
     r = get_user(client)
     user_id = r['sub']
     content = os.getenv("CONTENT")
-    # if content is None or content == "":
-    #     raise ValueError("Error: CONTENT is not set properly or empty.")
+
     
     share_media_category = os.getenv("SHARE_MEDIA_CATEGORY", "NONE")
-    share_media_category_enum = ["NONE", "IMAGE", "ARTICLE"]
+    share_media_category_enum = ["NONE", "IMAGE", "VIDEO", "ARTICLE"]
     if share_media_category not in share_media_category_enum:
         raise ValueError(f"Error: invalid SHARE_MEDIA_CATEGORY value: {share_media_category}. Must be one of {share_media_category_enum}")
 
-    
+    if share_media_category == "NONE" and (content == ""):
+        raise ValueError("Error: CONTENT can't be empty if SHARE_MEDIA_CATEGORY is NONE.")
+
     visibility = os.getenv("VISIBILITY", "PUBLIC")
     visibility_enum = ["PUBLIC", "CONNECTIONS"]
     if visibility not in visibility_enum:
         raise ValueError(f"Error: invalid VISIBILITY value: {visibility}. Must be one of {visibility_enum}")
     
+    share_media_category_value = share_media_category
+    if share_media_category == "VIDEO":
+        share_media_category_value = "IMAGE"
     payload = {
         "author": f"urn:li:person:{user_id}",
         "lifecycleState": "PUBLISHED", # it's always PUBLISHED
@@ -31,7 +35,7 @@ def create_post(client: RestliClient):
             "shareCommentary": {
                 "text": content
             },
-                "shareMediaCategory": share_media_category,
+                "shareMediaCategory": share_media_category_value,
             }
         },
         "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": visibility},
@@ -39,7 +43,11 @@ def create_post(client: RestliClient):
     
     if share_media_category != "NONE":
         title = os.getenv("SHARE_MEDIA_TITLE")
+        if title is None or title == "":
+            raise ValueError("Error: to create a media, SHARE_MEDIA_TITLE is required.")
         description = os.getenv("SHARE_MEDIA_DESC")
+        if description is None or description == "":
+            raise ValueError("Error: to create a media, SHARE_MEDIA_DESC is required.")
         
         if share_media_category == "ARTICLE":
             if "SHARE_MEDIA_ORIGINAL_URL" not in os.environ:
@@ -57,9 +65,12 @@ def create_post(client: RestliClient):
                         }
                     }
                 ]
-        elif share_media_category == "IMAGE":
-            upload_url, asset = register_upload(client)
-            upload_file("test.png", upload_url)
+        elif share_media_category == "IMAGE" or share_media_category == "VIDEO":
+            file_path = os.getenv("SHARE_MEDIA_FILE_PATH")
+            if file_path is None or file_path == "":
+                raise ValueError("Error: to create an image or video, SHARE_MEDIA_FILE_PATH is required.")
+            upload_url, asset = _register_upload(client, share_media_category)
+            await _upload_registered_file(file_path, upload_url)
             media_payload = [
                 {
                     "status": "READY",
@@ -89,7 +100,7 @@ def create_post(client: RestliClient):
 
 import requests
 
-def register_upload(client: RestliClient):
+def _register_upload(client: RestliClient, category: str):
     url = "https://api.linkedin.com/v2/assets?action=registerUpload"
     
     headers = {
@@ -97,12 +108,19 @@ def register_upload(client: RestliClient):
         "Content-Type": "application/json",
     }
     
+    if category == "IMAGE":
+        recipe = "urn:li:digitalmediaRecipe:feedshare-image"
+    elif category == "VIDEO":
+        recipe = "urn:li:digitalmediaRecipe:feedshare-video"
+    else:
+        raise ValueError(f"Error: invalid SHARE_MEDIA_CATEGORY value: {category}.")
+    
     # File metadata could include information like file type, size, etc.
     user_id = get_user(client)['sub']
     data ={
     "registerUploadRequest": {
         "recipes": [
-            "urn:li:digitalmediaRecipe:feedshare-image" # or live-video
+            recipe
         ],
         "owner": f"urn:li:person:{user_id}",
         "serviceRelationships": [
@@ -121,20 +139,21 @@ def register_upload(client: RestliClient):
         response_json = response.json()
         return response_json['value']["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"], response_json["value"]["asset"]
     else:
-        return {"error": response.text}
+        raise Exception(f"Error: failed to register upload. Status code: {response.status_code}. Response: {response.text}")
 
 
-def upload_file(file_path,  upload_url):
+async def _upload_registered_file(file_path,  upload_url):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/octet-stream"
     }
     
-    # Open the file in binary mode and read its content
-    with open(file_path, 'rb') as file:
-        # Upload the file using POST with file data
-        data = file.read()  
-        response = requests.post(upload_url, headers=headers, data=data)
+    # with open(file_path, 'rb') as file:
+    #     data = file.read()  
+    data = await load_from_gptscript_workspace(file_path)
+    assert type(data) == bytes
+        
+    response = requests.post(upload_url, headers=headers, data=data)
 
     if response.status_code != 201:
         raise ValueError(f"Error: failed to upload file. Status code: {response.status_code}. Response: {response.text}")

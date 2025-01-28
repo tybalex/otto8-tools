@@ -3,9 +3,9 @@ from tools import users, posts
 from tools.helper import tool_registry
 import json
 import sys
+import asyncio
 
-
-def main():
+async def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <tool_name>")
         sys.exit(1)
@@ -16,9 +16,9 @@ def main():
     # upload_url, asset = register_upload(client)
     # print(upload_url, asset)
     
-    response = tool_registry.get(command)(client)
+    response = await tool_registry.get(command)(client)
     print(json.dumps(response, indent=4))
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
