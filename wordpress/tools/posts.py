@@ -142,7 +142,7 @@ def list_posts(client):
     url += suffix
 
     response = client.get(url)
-    if response.status_code == 200:
+    if response.status_code >= 200 and response.status_code < 300:
         return [_format_posts_response(post) for post in response.json()]
     else:
         print(f"Failed to list posts. Error: {response.status_code}, {response.text}")
@@ -234,7 +234,7 @@ def create_post(client):
     post_data["ping_status"] = ping_status
 
     response = client.post(url, json=post_data)
-    if response.status_code == 201:
+    if response.status_code >= 200 and response.status_code < 300:
         return _format_posts_response(response.json())
     else:
         print(f"Failed to create post. Error: {response.status_code}, {response.text}")
@@ -249,7 +249,7 @@ def delete_post(client):
         url += "?force=true"
 
     response = client.delete(url)
-    if response.status_code == 200:
+    if response.status_code >= 200 and response.status_code < 300:
         return {"message": "Post deleted successfully"}
     else:
         print(f"Failed to delete post. Error: {response.status_code}, {response.text}")
@@ -350,7 +350,7 @@ def update_post(client):
         post_data["ping_status"] = ping_status
 
     response = client.post(url, json=post_data)
-    if response.status_code == 200:
+    if response.status_code >= 200 and response.status_code < 300:
         return _format_posts_response(response.json())
     else:
         print(f"Failed to update post. Error: {response.status_code}, {response.text}")
