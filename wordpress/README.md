@@ -42,6 +42,12 @@ and run `docker compose -f wordpress.yaml up`.
 
 Navigate to localhost:8070. The first time you run the container, it will prompt you to register the site name and create a new user.
 
+### Obot Basic Auth Configuration
+
+- username: the username you created first time you nagivate to the site
+- password: the password of the user you created first time you nagivate to the site
+- url: the url of your wordpress site. For local, it's `http://localhost:8070`. For hosted, it's the url of your wordpress site, such as `https://example.wpenginepowered.com`.
+
 ### CRITICAL: Configure Permalinks in Settings
 1. Without configuring permalinks, the Wordpress API will not work, because the `/wp-json` endpoint will not be available.
 To do this, go to your wordpress site dashboard, on the left sidebar, select `Settings` -> `Permalinks`, then select any non-plain Permalink structure.
