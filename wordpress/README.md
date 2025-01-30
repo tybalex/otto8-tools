@@ -17,6 +17,8 @@ services:
       WORDPRESS_DB_USER: dbuser
       WORDPRESS_DB_PASSWORD: dbpassword
       WORDPRESS_DB_NAME: exampledb
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE', 'local');
     volumes:
       - wordpress:/var/www/html
 
@@ -38,7 +40,11 @@ volumes:
 ```
 and run `docker compose -f wordpress.yaml up`.
 
+Navigate to localhost:8070. The first time you run the container, it will prompt you to register the site name and create a new user.
+
 ### CRITICAL: Configure Permalinks in Settings
-Without configuring permalinks, the Wordpress API will not work, because the `/wp-json` endpoint will not be available.
+1. Without configuring permalinks, the Wordpress API will not work, because the `/wp-json` endpoint will not be available.
 To do this, go to your wordpress site dashboard, on the left sidebar, select `Settings` -> `Permalinks`, then select any non-plain Permalink structure.
+2. You must create an application password to be able to create posts. 
+To do this, go to your wordpress site dashboard, on the left sidebar, select `Users`, edit your user profile and scroll down to the `Application Passwords` section, then select `Add New`.
 
