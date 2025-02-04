@@ -1,0 +1,22 @@
+---
+Name: Structured Data Analyzer
+Description: Tools for analyzing structured data, supported file extensions: .xlsx, .xls, .csv, .tsv
+Metadata: bundle: true
+Share Tools: Read Structured Document Content, Query Data
+
+---
+Name: Read Structured Document Content
+Description: Read the content of the input workspace file. Supported file extensions: .xlsx, .xls, .csv, .tsv
+Param: input_file: the path to the input workspace file
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py ReadFileContent
+
+---
+Name: Query Data
+Description: Query the data
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py QueryData
+
+---
+!metadata:*:category
+Structured-Data-Analyzer

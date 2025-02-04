@@ -5,6 +5,9 @@ tools:
   file-summarizer:
     reference: ./file-summarizer
     all: true
+  structured-data-analyzer:
+    reference: ./structured-data-analyzer
+    all: true
   database:
     reference: ./database
   zoom:
