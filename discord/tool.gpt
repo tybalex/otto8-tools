@@ -1,0 +1,42 @@
+---
+Name: Discord
+Description: Tools for interacting with Discord
+Metadata: bundle: true
+Share Tools: Get Channels, Get Me
+
+---
+Name: Get Me
+Description: Get the current discord user.
+Credential: ./credential
+Share Context: Discord Context
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetMe
+
+---
+Name: Get Guilds
+Description: Get the guilds of the current discord user.
+Credential: ./credential
+Share Context: Discord Context
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py GetGuilds
+
+---
+Name: Discord Context
+Type: context
+Share Context: ../time
+
+#!sys.echo
+
+# Instructions for using Discord tools
+
+You can use this tool to interact with Discord with Discord APIs.
+
+# End of instructions for using Discord tools
+
+---
+!metadata:*:icon
+/admin/assets/discord-logo.svg
+
+---
+!metadata:*:oauth
+discord

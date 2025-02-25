@@ -7,6 +7,8 @@ tools:
     reference: ./database
   zoom:
     reference: ./zoom
+  discord:
+    reference: ./discord
   atlassian-jira:
     reference: ./atlassian/jira
   wordpress:
