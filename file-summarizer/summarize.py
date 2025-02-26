@@ -5,8 +5,9 @@ from typing import List
 import concurrent.futures
 import sys
 import os
-from helper import load_from_gptscript_workspace, save_to_gptscript_workspace
+from helper import load_from_gptscript_workspace, save_to_gptscript_workspace, setup_logger
 
+logger = setup_logger(__name__)
 
 MAX_CONTEXT_TOKENS = 128000
 MAX_OUTPUT_TOKENS = 16384
@@ -43,7 +44,7 @@ class DocumentSummarizer:
         max_chunk_tokens: int = MAX_CHUNK_TOKENS,
         chunk_overlap_tokens: int = CHUNK_OVERLAP_TOKENS,
         max_workers: int = MAX_WORKERS,
-        verbose: bool = False,
+        verbose: bool = True,
     ):
         """
         :param client: An OpenAI() client instance (from openai import OpenAI).
@@ -82,12 +83,12 @@ class DocumentSummarizer:
             )
 
         if self.verbose:
-            print(f"[DEBUG] Using model: {self.model}")
-            print(f"[DEBUG] max_context_tokens: {self.max_context_tokens}")
-            print(f"[DEBUG] max_output_tokens: {self.max_output_tokens}")
-            print(f"[DEBUG] overhead_tokens: {self.overhead_tokens}")
-            print(f"[DEBUG] max_chunk_size: {self.max_chunk_size}")
-            print(f"[DEBUG] max_workers: {self.max_workers}")
+            logger.info(f"Using model: {self.model}")
+            logger.info(f"max_context_tokens: {self.max_context_tokens}")
+            logger.info(f"max_output_tokens: {self.max_output_tokens}")
+            logger.info(f"overhead_tokens: {self.overhead_tokens}")
+            logger.info(f"max_chunk_size: {self.max_chunk_size}")
+            logger.info(f"max_workers: {self.max_workers}")
 
     def chunk_text(self, text: str) -> List[str]:
         """
@@ -98,8 +99,8 @@ class DocumentSummarizer:
         chunks = []
 
         if self.verbose:
-            print(f"[DEBUG] Total tokens in document: {len(tokens)}")
-            print("[DEBUG] Splitting into chunks...")
+            logger.info(f"Total tokens in document: {len(tokens)}")
+            logger.info("Splitting into chunks...")
 
         for i in range(0, len(tokens), self.max_chunk_size - self.chunk_overlap_tokens):
             chunk_slice = tokens[i : i + self.max_chunk_size]
@@ -107,7 +108,7 @@ class DocumentSummarizer:
             chunks.append(chunk_text)
 
         if self.verbose:
-            print(f"[DEBUG] Created {len(chunks)} chunk(s).")
+            logger.info(f"Created {len(chunks)} chunk(s).")
 
         return chunks
 
@@ -182,7 +183,7 @@ Critical rules:
         Summarize multiple chunks in parallel using ThreadPoolExecutor.
         """
         if self.verbose:
-            print("[DEBUG] Starting multi-pass summarization...")
+            logger.info("Starting multi-pass summarization...")
         summaries = []
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_workers
@@ -195,7 +196,7 @@ Critical rules:
                 summaries.append(future.result())
 
         if self.verbose:
-            print(f"[DEBUG] Summarized {len(chunks)} chunk(s) in parallel.")
+            logger.info(f"Summarized {len(chunks)} chunk(s) in parallel.")
 
         return summaries
 
@@ -247,8 +248,8 @@ Requirements:
         # Otherwise, split the text into chunks and summarize them in parallel
         next_level_summaries = self.summarize_chunks_in_parallel(chunks)
         if self.verbose:
-            print(
-                f"[DEBUG] Combining {len(next_level_summaries)} summaries into a new text..."
+            logger.info(
+                f"Combining {len(next_level_summaries)} summaries into a new text..."
             )
         return self.iterative_summarize("\n\n".join(next_level_summaries))
 
@@ -265,6 +266,7 @@ Requirements:
 
 async def main():
     input_file = os.getenv("INPUT_FILE", "")
+    verbose = True
     if not input_file:
         raise ValueError("Error: INPUT_FILE environment variable is not set")
     if not input_file.endswith(".md") and not input_file.endswith(".txt"):
@@ -281,18 +283,13 @@ async def main():
         print("Warning: File is empty, skipping summarization")
         return
 
-    output_file = os.getenv("OUTPUT_FILE", "")
-
-    if output_file == "NONE":
-        verbose = False
-    else:
-        verbose = True
+    output_file = os.getenv("OUTPUT_FILE", "NONE")
 
     try:
         from openai import OpenAI
         base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         if verbose:
-            print(f"[DEBUG] Using base_url: {base_url}")
+            logger.info(f"Using base_url: {base_url}")
         api_key = os.environ["OPENAI_API_KEY"]
         client = OpenAI(base_url=base_url, api_key=api_key)
     except Exception as e:
