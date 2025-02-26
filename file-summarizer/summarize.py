@@ -5,7 +5,7 @@ from typing import List
 import concurrent.futures
 import sys
 import os
-from helper import load_from_gptscript_workspace, save_to_gptscript_workspace, setup_logger
+from helper import load_from_gptscript_workspace, save_to_gptscript_workspace, setup_logger, extract_text_from_docx, extract_text_from_pdf, extract_text_from_pptx
 
 logger = setup_logger(__name__)
 
@@ -263,22 +263,35 @@ Requirements:
         final_summary = self.final_reduction(reduced_summary)
         return final_summary
 
+SUPPORTED_TEXT_FILE_TYPES = (".md", ".txt", ".markdown", ".text", ".mdx", ".mdtxt", ".mdtxtx")
+SUPPORTED_DOC_FILE_TYPES = (".docx", ".pdf", ".pptx")
+ALL_SUPPORTED_FILE_TYPES = SUPPORTED_TEXT_FILE_TYPES + SUPPORTED_DOC_FILE_TYPES
 
 async def main():
     input_file = os.getenv("INPUT_FILE", "")
-    verbose = True
     if not input_file:
         raise ValueError("Error: INPUT_FILE environment variable is not set")
-    if not input_file.endswith(".md") and not input_file.endswith(".txt"):
+    if not input_file.endswith(ALL_SUPPORTED_FILE_TYPES):
         raise ValueError(
-            "Error: the input file must end with .md or .txt, other file types are not supported yet."
+            f"Error: the input file must end with one of the following file types: {ALL_SUPPORTED_FILE_TYPES}, other file types are not supported yet."
         )
     try:
         file_content = await load_from_gptscript_workspace(input_file)
+        if input_file.endswith(SUPPORTED_TEXT_FILE_TYPES):
+            file_content = file_content.decode("utf-8")
+        else:
+            if input_file.endswith(".docx"):
+                file_content = extract_text_from_docx(file_content)
+            elif input_file.endswith(".pdf"):
+                file_content = extract_text_from_pdf(file_content)
+            elif input_file.endswith(".pptx"):
+                file_content = extract_text_from_pptx(file_content)
+            
     except Exception as e:
         raise ValueError(
             f"Failed to load file from GPTScript workspace file {input_file}, Error: {e}"
         )
+        
     if len(file_content) == 0:
         print("Warning: File is empty, skipping summarization")
         return
@@ -288,8 +301,7 @@ async def main():
     try:
         from openai import OpenAI
         base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        if verbose:
-            logger.info(f"Using base_url: {base_url}")
+        logger.info(f"Using base_url: {base_url}")
         api_key = os.environ["OPENAI_API_KEY"]
         client = OpenAI(base_url=base_url, api_key=api_key)
     except Exception as e:
@@ -300,7 +312,7 @@ async def main():
         model=MODEL,
         max_chunk_tokens=MAX_CHUNK_TOKENS,
         max_workers=MAX_WORKERS,
-        verbose=verbose,
+        verbose=True,
     )
 
     try:

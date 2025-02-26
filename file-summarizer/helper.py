@@ -2,6 +2,11 @@ import gptscript
 import os
 import logging
 import sys
+import io
+import struct
+import fitz  # PyMuPDF
+import docx
+from pptx import Presentation
 
 
 def setup_logger(name):
@@ -81,8 +86,41 @@ async def save_to_gptscript_workspace(filepath: str, content: str) -> None:
     )
 
 
-async def load_from_gptscript_workspace(filepath: str) -> str:
+async def load_from_gptscript_workspace(filepath: str) -> bytes:
     gptscript_client = gptscript.GPTScript()
     wksp_file_path = _prepend_base_path("files", filepath)
     file_content = await gptscript_client.read_file_in_workspace(wksp_file_path)
-    return file_content.decode("utf-8")
+    return file_content
+
+
+
+def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    """Extracts text from a PDF file given as bytes."""
+    pdf_stream = io.BytesIO(pdf_bytes)
+    doc = fitz.open(stream=pdf_stream, filetype="pdf")
+    
+    text = []
+    for page in doc:
+        text.append(page.get_text("text"))
+    
+    return "\n".join(text)
+
+def extract_text_from_docx(docx_bytes: bytes) -> str:
+    """Extracts text from a Word (.docx) file given as bytes."""
+    doc_stream = io.BytesIO(docx_bytes)
+    doc = docx.Document(doc_stream)
+    
+    return "\n".join([para.text for para in doc.paragraphs])
+
+def extract_text_from_pptx(pptx_bytes: bytes) -> str:
+    """Extracts text from a PowerPoint (.pptx) file given as bytes."""
+    ppt_stream = io.BytesIO(pptx_bytes)
+    prs = Presentation(ppt_stream)
+    
+    text = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                text.append(shape.text)
+    
+    return "\n".join(text)
