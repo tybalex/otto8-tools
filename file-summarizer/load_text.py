@@ -3,8 +3,9 @@ import struct
 import fitz  # PyMuPDF
 import docx
 from pptx import Presentation
-from helper import load_from_gptscript_workspace, save_to_gptscript_workspace
+from helper import load_from_gptscript_workspace, setup_logger
 
+logger = setup_logger(__name__)
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     """Extracts text from a PDF file given as bytes."""
@@ -53,6 +54,7 @@ async def load_text_from_file(file_path: str) -> str:
     try:
         file_content = await load_from_gptscript_workspace(file_path)
     except Exception as e:
+        logger.error(f"Failed to load file from GPTScript workspace file {file_path}, Error: {e}")
         raise ValueError(
             f"Failed to load file from GPTScript workspace file {file_path}, Error: {e}"
         )

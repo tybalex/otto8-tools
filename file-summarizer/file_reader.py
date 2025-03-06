@@ -3,6 +3,7 @@ from helper import setup_logger, get_openai_client
 from summarize import DocumentSummarizer, MODEL, TIKTOKEN_MODEL, MAX_CHUNK_TOKENS, MAX_WORKERS
 import os
 import tiktoken
+import asyncio
 
 logger = setup_logger(__name__)
 
@@ -28,12 +29,15 @@ async def main():
         try:
             final_summary = summarizer.summarize(file_content)
         except Exception as e:
+            logger.error(f"Summarization failed: {e}")
             raise Exception(f"ERROR: Summarization failed: {e}")
         
-        response_str = f"Uploaded file {input_file} contains {len(tokens)} tokens.\n\n"
-        response_str += f"Summary of the file content:\n\n{final_summary}"
+        response_str = f"The uploaded file {input_file} contains too many tokens ({len(tokens)}), here is the summary of the file content:\n\n{final_summary}"
         print(response_str)
         return response_str
     else: # if the file has less than TOKEN_THRESHOLD tokens, directly return the file content
         print(file_content)
         return file_content
+
+if __name__ == "__main__":
+    asyncio.run(main())

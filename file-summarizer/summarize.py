@@ -295,7 +295,7 @@ async def main():
         if output_file == "":
             directory, file_name = os.path.split(input_file)
             name, ext = os.path.splitext(file_name)
-            summary_file_name = f"{name}_summary{ext}"
+            summary_file_name = f"{name}_summary.md"
             output_file = os.path.join(directory, summary_file_name)
 
         try:
