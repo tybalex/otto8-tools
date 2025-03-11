@@ -13,6 +13,25 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
+
+SYSTEM_PROMPT = "You are a helpful assistant."
+MAX_OUTPUT_TOKENS = 10000
+def chat_completion(
+        messages,
+        max_tokens: int = MAX_OUTPUT_TOKENS,
+        temperature: float = 0.1,
+    ) -> str:
+    all_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=all_messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
+    return response.choices[0].message.content.strip()
+
+
+
 async def get_channels():
     for guild in client.guilds:  # Loop through all servers the bot is in
         print(f"Server: {guild.name} (ID: {guild.id})")
@@ -59,22 +78,8 @@ GUILD_ID = "1343451744822099998"
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
-    # await tree.sync(guild=discord.Object(id=GUILD_ID))
-    await get_channels()
-    
-    # await send_message()  # Calling the custom function
-    
-# @client.event
-# async def on_message(message):
-#     # Ignore messages sent by the bot itself
-#     if message.author == client.user:
-#         return
-
-#     print(f"Message from {message.author}: {message.content}")
-
-#     # Example: If someone says "hello", the bot replies
-#     if message.content.lower() == "hello":
-#         await message.channel.send(f"Hello, {message.author.name}!")
+    await tree.sync(guild=discord.Object(id=GUILD_ID))
+    # await get_channels()
 
 
 @tree.command(name="hello", description="Say hello to the bot!", guild=discord.Object(id=GUILD_ID))
@@ -88,16 +93,31 @@ user_threads = {}
 @app_commands.describe(message="The message to start the thread with")
 async def thread_command(interaction: discord.Interaction, message: str):
     if isinstance(interaction.channel, discord.Thread):  # If used inside a thread
-        await interaction.response.send_message(f"{interaction.user.mention}, I'm continuing in this thread! You said: {message}")
+        thread = interaction.channel
+
+        # Retrieve all messages in the thread
+        messages = []
+        async for msg in thread.history(limit=None):  # Fetch all messages
+            messages.append(f"{msg.author.name}: {msg.content}")
+
+        # Print messages to the console
+        print("\n".join(reversed(messages)))
+
+        # Respond in the thread
+        await interaction.response.send_message(f"[{interaction.user.name}]: {message}")
+        await thread.send(f"hi again")
+
     else:  # If used in a normal text channel, create a new thread
         thread = await interaction.channel.create_thread(
             name=f"{interaction.user.name}'s Thread",
             type=discord.ChannelType.public_thread,
             auto_archive_duration=60
         )
-        await thread.send(f"{interaction.user.mention} started this thread: {message}")
+        await thread.send(f"[{interaction.user.name}]: {message}")
+        messages = [{"role": "user", "content": message}]
+        response = chat_completion(messages)
+        await thread.send(f"{interaction.user.mention} {response}")
         await interaction.response.send_message(f"Thread created! Join here: {thread.jump_url}", ephemeral=True)
-
 
 
 # Bot Listens for Messages in Threads It Created
@@ -110,11 +130,19 @@ async def on_message(message):
         thread = message.channel
 
         try:
-            # Fetch the actual thread starter message
+            # Fetch the actual thread starter
             if thread.owner_id:
                 print(f"Thread owner ID: {thread.owner_id}")
                 if thread.owner_id == client.user.id:
-                    await thread.send(f"{message.author.mention}, I'm here to help! You said: {message.content}")
+                    # Retrieve all messages in the thread
+                    messages = []
+                    async for msg in thread.history(limit=None):  # Fetch all messages
+                        messages.append(f"{msg.author.name}: {msg.content}")
+
+                    # Print out all messages in the thread
+                    content = "\n".join(reversed(messages))
+
+                    await thread.send(f"{message.author.mention}, I'm here to help! Conversation history: {content}")
         except discord.NotFound:
             pass  # If the thread's starter message isn't found, do nothing
     
@@ -125,3 +153,5 @@ async def on_message(message):
         await message.channel.send("Retrieved 10 chat history!")
 
 client.run(TOKEN)
+
+
