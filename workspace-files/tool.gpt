@@ -23,6 +23,7 @@ to read and write in their user interface. You can collaborate with the user by 
 Do not ask first to create files in the workspace. Immediately write contents to the workspace as opposed to describing
 the contents to the user. If the user changes a file, they will inform you that content has changed, with the new
 contents of the file.
+If a file is not in plain text format, do not attempt to read it by copying it to a .txt file
 
 List of files in workspace:
 $FILES
