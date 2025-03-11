@@ -38,14 +38,14 @@ Params: dir: The directory to list files from
 
 ---
 Name: workspace_read
-Description: Read the contents of a file in the workspace
+Description: Read the contents of a file in the workspace. Supports only plain text formats (e.g., .txt, .md) and does not allow writing to binary files (e.g., .pdf, .docx, .pptx, .xlsx, .jpg, .png, .gif, .mp3, .mp4, .zip, .rar).
 Params: filename: The filename to read
 
 #!${GPTSCRIPT_TOOL_DIR}/bin/gptscript-go-tool read
 
 ---
 Name: workspace_write
-Description: Write contents to a file, overwriting the existing file if it exists.
+Description: Writes content to a file, replacing any existing content if the file already exists. Supports only plain text formats (e.g., .txt, .md) and does not allow writing to binary files (e.g., .pdf, .docx, .pptx, .xlsx, .jpg, .png, .gif, .mp3, .mp4, .zip, .rar).
 Params: filename: The filename to write to
 Params: content: The contents to write to the file
 
