@@ -174,6 +174,7 @@ func list(ctx context.Context, filename string) error {
 
 func read(ctx context.Context, filename string) error {
 
+	// Check for common binary file types that are not supported. Less common types should be caught by the utf8.Valid() check
 	for _, ext := range unsupportedFileTypes {
 		if strings.HasSuffix(strings.ToLower(filename), ext) {
 			return fmt.Errorf("reading files with extension %s is not supported", ext)
