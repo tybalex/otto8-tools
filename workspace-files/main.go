@@ -23,9 +23,10 @@ var (
 	MaxFileSize = 250_000
 )
 
-var unsupportedFileTypes = []string{
-	".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".jpg", ".png", ".gif", ".mp3", ".mp4", ".zip", ".rar",
-}
+var unsupportedWriteFileTypes = []string{
+	".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls", ".jpg", ".png", ".gif", ".mp3", ".mp4", ".zip", ".rar"}
+var nonPlainTextFileTypes = []string{".pdf", ".pptx", ".ppt", ".docx", ".doc", ".odt", ".rtf", ".ipynb"} // ipynb is in json. we want to convert it to markdown
+
 
 func main() {
 	if len(os.Args) == 1 {
@@ -172,12 +173,48 @@ func list(ctx context.Context, filename string) error {
 	return nil
 }
 
-func read(ctx context.Context, filename string) error {
 
-	// Check for common binary file types that are not supported. Less common types should be caught by the utf8.Valid() check
-	for _, ext := range unsupportedFileTypes {
+func readNonPlainOrLargeFile(ctx context.Context, filename string) (string, error) {
+	// forward to a tool to handle non-plain text files or large files
+	client, err := gptscript.NewGPTScript()
+	if err != nil {
+		return "", err
+	}
+
+	var workspaceID = os.Getenv("GPTSCRIPT_WORKSPACE_ID")
+	newData := map[string]string{"input_file": filename}
+
+	jsonData, err := json.Marshal(newData)
+	if err != nil {
+		return "", err
+	}
+
+	run, err := client.Run(ctx, "github.com/obot-platform/tools/file-summarizer/tool.gpt", gptscript.Options{
+		Input: string(jsonData),
+		Workspace: workspaceID,
+	})
+
+	text, err := run.Text()
+	if err != nil {
+		return "", err
+	}
+
+	return text, nil
+}
+
+func read(ctx context.Context, filename string) error {
+	triedNonPlain := false
+	// Check if the file extension is not plain text. If it is, forward it the a separate tool to handle it.
+	for _, ext := range nonPlainTextFileTypes {
 		if strings.HasSuffix(strings.ToLower(filename), ext) {
-			return fmt.Errorf("reading files with extension %s is not supported", ext)
+			text, err := readNonPlainOrLargeFile(ctx, filename) // hand it to the tool to ingest it and potentially summarize it
+			triedNonPlain = true
+			if err == nil {
+				fmt.Println(string(text))
+				return nil
+			}
+			// if failed, fallback to plain-text attempt
+			break
 		}
 	}
 
@@ -192,7 +229,17 @@ func read(ctx context.Context, filename string) error {
 	}
 
 	if len(data) > MaxFileSize {
-		return fmt.Errorf("file size exceeds %d bytes", MaxFileSize)
+		if triedNonPlain {
+			return fmt.Errorf("file size exceeds %d bytes", MaxFileSize)
+		}
+
+		text, err := readNonPlainOrLargeFile(ctx, filename) // hand it to the tool to summarize it
+		if err != nil {
+			return fmt.Errorf("file size exceeds %d bytes and failed to summarize it as plain text: %w", MaxFileSize, err)
+		}
+		fmt.Println(string(text))
+		return nil
+
 	}
 
 	if utf8.Valid(data) {
@@ -204,8 +251,8 @@ func read(ctx context.Context, filename string) error {
 }
 
 func write(ctx context.Context, filename, content string) error {
-	// Check if the file extension is unsupported
-	for _, ext := range unsupportedFileTypes {
+	// Check if the file extension is not plain text. We don't support writing to non-plain text files yet.
+	for _, ext := range unsupportedWriteFileTypes {
 		if strings.HasSuffix(strings.ToLower(filename), ext) {
 			return fmt.Errorf("writing to files with extension %s is not supported", ext)
 		}
