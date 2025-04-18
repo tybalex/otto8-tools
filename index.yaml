@@ -97,6 +97,8 @@ tools:
     reference: ./discord
   proxycurl:
     reference: ./proxycurl
+  memory:
+    reference: ./memory
 
 
 knowledgeDataSources:
