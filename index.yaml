@@ -140,6 +140,8 @@ system:
     reference: ./tasks-workflow
   task-invoke:
     reference: ./task-invoke
+  loop-data:
+    reference: ./loop-data
 
 modelProviders:
   openai-model-provider:
