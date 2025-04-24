@@ -82,22 +82,20 @@ func ListCalendars(ctx context.Context, client *msgraphsdkgo.GraphServiceClient)
 
 	// TODO - handle if there are more than 100
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to get group memberships: %w", err)
-	}
+	if err == nil { // if user's account has access to groups feature
+		for _, group := range memberOf.GetValue() {
+			result, err := client.Groups().ByGroupId(util.Deref(group.GetId())).Calendar().Get(ctx, nil)
+			if err != nil {
+				// Some groups don't have calendars and will just error out. That's fine.
+				continue
+			}
 
-	for _, group := range memberOf.GetValue() {
-		result, err := client.Groups().ByGroupId(util.Deref(group.GetId())).Calendar().Get(ctx, nil)
-		if err != nil {
-			// Some groups don't have calendars and will just error out. That's fine.
-			continue
+			calendars = append(calendars, CalendarInfo{
+				Calendar: result,
+				ID:       util.Deref(group.GetId()),
+				Owner:    OwnerTypeGroup,
+			})
 		}
-
-		calendars = append(calendars, CalendarInfo{
-			Calendar: result,
-			ID:       util.Deref(group.GetId()),
-			Owner:    OwnerTypeGroup,
-		})
 	}
 
 	return calendars, nil
