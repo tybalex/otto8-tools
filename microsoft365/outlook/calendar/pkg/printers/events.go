@@ -3,12 +3,14 @@ package printers
 import (
 	"context"
 	"fmt"
-	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/graph"
-	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/util"
 	"github.com/jaytaylor/html2text"
 	msgraphsdkgo "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/graph"
+	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/util"
+	"os"
 	"strings"
+	"time"
 )
 
 func EventToString(ctx context.Context, client *msgraphsdkgo.GraphServiceClient, calendar graph.CalendarInfo, event models.Eventable) string {
@@ -27,13 +29,26 @@ func EventToString(ctx context.Context, client *msgraphsdkgo.GraphServiceClient,
 	var sb strings.Builder
 	sb.WriteString("Subject: " + util.Deref(event.GetSubject()) + "\n")
 	sb.WriteString("  ID: " + util.Deref(event.GetId()) + "\n")
-	startTZ, endTZ := EventDisplayTimeZone(event)
-	sb.WriteString("  Start: " + util.Deref(event.GetStart().GetDateTime()) + startTZ + "\n")
-	sb.WriteString("  End: " + util.Deref(event.GetEnd().GetDateTime()) + endTZ + "\n")
+
+	isAllDay := util.Deref(event.GetIsAllDay())
+	if isAllDay {
+		sb.WriteString("  Time: All Day Event\n")
+	} else {
+		startTimeConverted, startTZDisplay, endTimeConverted, endTZDisplay := convertEventTimesToUserTimezone(event)
+		sb.WriteString("  Start Time: " + startTimeConverted + " " + startTZDisplay + "\n")
+		sb.WriteString("  End Time: " + endTimeConverted + " " + endTZDisplay + "\n")
+	}
+
+	isRecurring := "No"
+	if event.GetSeriesMasterId() != nil {
+		isRecurring = "Yes"
+	}
+	sb.WriteString("  Recurring: " + isRecurring + "\n")
+
 	sb.WriteString("  In calendar: " + calendarName + " (ID " + calendar.ID + ")\n")
 	if calendar.Calendar.GetOwner() != nil {
-		fmt.Printf("  Owner: %s (%s)\n", util.Deref(calendar.Calendar.GetOwner().GetName()), util.Deref(calendar.Calendar.GetOwner().GetAddress()))
-		fmt.Printf("  Owner Type: %s\n", string(calendar.Owner))
+		sb.WriteString("  Owner: " + util.Deref(calendar.Calendar.GetOwner().GetName()) + " (" + util.Deref(calendar.Calendar.GetOwner().GetAddress()) + ")\n")
+		sb.WriteString("  Owner Type: " + string(calendar.Owner) + "\n")
 	}
 	return sb.String()
 }
@@ -41,18 +56,25 @@ func EventToString(ctx context.Context, client *msgraphsdkgo.GraphServiceClient,
 func PrintEvent(event models.Eventable, detailed bool) {
 	fmt.Printf("Subject: %s\n", util.Deref(event.GetSubject()))
 	fmt.Printf("  ID: %s\n", util.Deref(event.GetId()))
-	startTZ, endTZ := EventDisplayTimeZone(event)
-	fmt.Printf("  Start: %s%s\n", util.Deref(event.GetStart().GetDateTime()), startTZ)
-	fmt.Printf("  End: %s%s\n", util.Deref(event.GetEnd().GetDateTime()), endTZ)
+
+	isAllDay := util.Deref(event.GetIsAllDay())
+	if isAllDay {
+		fmt.Printf("  Time: All Day Event\n")
+	} else {
+		startTimeConverted, startTZDisplay, endTimeConverted, endTZDisplay := convertEventTimesToUserTimezone(event)
+
+		fmt.Printf("  Start Time: %s %s\n", startTimeConverted, startTZDisplay)
+		fmt.Printf("  End Time: %s %s\n", endTimeConverted, endTZDisplay)
+	}
+
+	if event.GetSeriesMasterId() != nil {
+		fmt.Printf("  Recurring: Yes\n")
+	} else {
+		fmt.Printf("  Recurring: No\n")
+	}
 
 	if detailed {
 		fmt.Printf("  Location: %s\n", util.Deref(event.GetLocation().GetDisplayName()))
-		fmt.Printf("  Is All Day: %t\n", util.Deref(event.GetIsAllDay()))
-		isRecurring := false
-		if event.GetSeriesMasterId() != nil {
-			isRecurring = true
-		}
-		fmt.Printf("  Is Recurring: %t\n", isRecurring)
 		fmt.Printf("  Is Cancelled: %t\n", util.Deref(event.GetIsCancelled()))
 		fmt.Printf("  Is Online Meeting: %t\n", util.Deref(event.GetIsOnlineMeeting()))
 		fmt.Printf("  Response Status: %s\n", event.GetResponseStatus().GetResponse().String())
@@ -101,4 +123,57 @@ func EventDisplayTimeZone(event models.Eventable) (string, string) {
 		endTZ = " " + util.Deref(event.GetEnd().GetTimeZone())
 	}
 	return startTZ, endTZ
+}
+
+// convertTimeStringToUserTimezone converts a time string from source timezone to user timezone
+func convertTimeStringToUserTimezone(timeStr, sourceTZ, userTZ string) (string, string) {
+	// If it's empty or no conversion is needed
+	if timeStr == "" || userTZ == sourceTZ {
+		return timeStr, sourceTZ
+	}
+
+	layout := "2006-01-02T15:04:05.0000000" // a hardcoded layout for parsing the time string
+
+	// Load source location
+	srcLoc, err := time.LoadLocation(sourceTZ)
+	if err != nil {
+		fmt.Printf("Error loading source timezone: %s, error: %s\n", sourceTZ, err)
+		return timeStr, sourceTZ
+	}
+
+	// Parse the time string *in* the source location
+	t, err := time.ParseInLocation(layout, timeStr, srcLoc)
+	if err != nil {
+		fmt.Printf("Error parsing time string: %s\n", err)
+		return timeStr, sourceTZ
+	}
+
+	// Load user location
+	userLoc, err := time.LoadLocation(userTZ)
+	if err != nil {
+		fmt.Printf("Error loading user timezone: %s, error: %s\n", userTZ, err)
+		return timeStr, sourceTZ
+	}
+
+	// Convert to user's timezone
+	t = t.In(userLoc)
+	return t.Format(layout), userTZ
+}
+
+// convertEventTimesToUserTimezone converts both start and end times of an event to the user's timezone
+func convertEventTimesToUserTimezone(event models.Eventable) (start, startTZ, end, endTZ string) {
+	userTZ := os.Getenv("OBOT_USER_TIMEZONE")
+	if userTZ == "" {
+		userTZ = "UTC"
+	}
+
+	startTime := util.Deref(event.GetStart().GetDateTime())
+	startTZSource := util.Deref(event.GetStart().GetTimeZone())
+	start, startTZ = convertTimeStringToUserTimezone(startTime, startTZSource, userTZ)
+
+	endTime := util.Deref(event.GetEnd().GetDateTime())
+	endTZSource := util.Deref(event.GetEnd().GetTimeZone())
+	end, endTZ = convertTimeStringToUserTimezone(endTime, endTZSource, userTZ)
+
+	return start, startTZ, end, endTZ
 }
