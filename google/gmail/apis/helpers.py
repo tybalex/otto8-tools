@@ -41,14 +41,17 @@ GMAIL_BUILTIN_LABELS = {
 }
 
 def parse_label_ids(label_ids_input: str) -> list[str]:
-    label_ids = []
-    for label in label_ids_input.split(","):
-        label = label.strip()
-        if label.upper() in GMAIL_BUILTIN_LABELS:
-            label_ids.append(label.upper())
-        else:
-            label_ids.append(label)  # preserve custom labels
-    return label_ids
+    if not isinstance(label_ids_input, str):
+        raise TypeError("label_ids_input must be a string")
+
+    if not label_ids_input.strip():
+        return []
+
+    return [
+        label.upper() if label.upper() in GMAIL_BUILTIN_LABELS else label
+        for label in (l.strip() for l in label_ids_input.split(","))
+        if label
+    ]
 
 def get_user_timezone():
     user_tz = os.getenv("OBOT_USER_TIMEZONE", "UTC").strip()
