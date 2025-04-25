@@ -113,12 +113,22 @@ def modify_message_labels(
         "removeLabelIds": list(remove_labels),
     }
 
-    return (
-        service.users()
-        .messages()
-        .modify(userId="me", id=message_id, body=body)
-        .execute()
-    )
+    is_thread_message = False # if the message if part of a thread that has multiple messages
+    if "INBOX" in remove_labels: # this means we are archiving the message
+        message = fetch_email_or_draft(service, message_id, format="metadata")
+        thread_id = message.get("threadId")
+        if thread_id:
+            thread = service.users().threads().get(userId="me", id=thread_id, format="minimal").execute()
+            thread_messages = thread.get("messages", [])
+            if len(thread_messages) > 1:
+                is_thread_message = True
+    try:
+        response = {"Response": service.users().messages().modify(userId="me", id=message_id, body=body).execute()}
+        if is_thread_message:
+            response["Note"] = "This message is part of a thread with multiple emails. The thread will stay in your inbox unless you archive all messages in the conversation."
+    except HttpError as e:
+        raise Exception(f"Error modifying message labels: {e}")
+    return response
 
 
 async def create_message(
@@ -323,13 +333,13 @@ def display_list_messages(service, messages: list):
         print(msg_str)
 
 
-def fetch_email_or_draft(service, obj_id):
+def fetch_email_or_draft(service, obj_id, format="full"):
     try:
         # Try fetching as an email first
         return (
             service.users()
             .messages()
-            .get(userId="me", id=obj_id, format="full")
+            .get(userId="me", id=obj_id, format=format)
             .execute()
         )
     except HttpError as email_err:
