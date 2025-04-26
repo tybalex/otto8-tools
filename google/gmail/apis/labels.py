@@ -1,4 +1,5 @@
-import googleapiclient.errors # Add import for potential API errors
+import googleapiclient.errors  # Add import for potential API errors
+
 
 def list_labels(service):
     try:
@@ -18,7 +19,9 @@ def get_label(service, label_id):
     except googleapiclient.errors.HttpError as e:
         raise Exception(f"An error occurred getting label {label_id}: {e}") from e
     except Exception as e:
-        raise Exception(f"An unexpected error occurred getting label {label_id}: {e}") from e
+        raise Exception(
+            f"An unexpected error occurred getting label {label_id}: {e}"
+        ) from e
 
 
 def create_label(
@@ -34,7 +37,9 @@ def create_label(
     except googleapiclient.errors.HttpError as e:
         raise Exception(f"An error occurred creating label '{name}': {e}") from e
     except Exception as e:
-        raise Exception(f"An unexpected error occurred creating label '{name}': {e}") from e
+        raise Exception(
+            f"An unexpected error occurred creating label '{name}': {e}"
+        ) from e
 
 
 def update_label(
@@ -54,12 +59,17 @@ def update_label(
 
     try:
         return (
-            service.users().labels().update(userId="me", id=label_id, body=label).execute()
+            service.users()
+            .labels()
+            .update(userId="me", id=label_id, body=label)
+            .execute()
         )
     except googleapiclient.errors.HttpError as e:
         raise Exception(f"An error occurred updating label {label_id}: {e}") from e
     except Exception as e:
-        raise Exception(f"An unexpected error occurred updating label {label_id}: {e}") from e
+        raise Exception(
+            f"An unexpected error occurred updating label {label_id}: {e}"
+        ) from e
 
 
 def delete_label(service, label_id):
@@ -69,4 +79,6 @@ def delete_label(service, label_id):
     except googleapiclient.errors.HttpError as e:
         raise Exception(f"An error occurred deleting label {label_id}: {e}") from e
     except Exception as e:
-        raise Exception(f"An unexpected error occurred deleting label {label_id}: {e}") from e
+        raise Exception(
+            f"An unexpected error occurred deleting label {label_id}: {e}"
+        ) from e

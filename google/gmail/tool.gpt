@@ -61,17 +61,19 @@ Param: email_id: The ID of the email to delete
 
 ---
 Name: Modify Email Labels
-Description: Modify labels on a Gmail email. Supports marking an email as read or unread, archiving or unarchiving it, starring or unstarring it, marking it as important or not important, and adding or removing custom labels.
+Description: Modify labels on a Gmail email or on all messages within the same thread. Supports marking an email or the entire thread as read or unread, archiving or unarchiving, starring or unstarring, marking as important or not important, and adding or removing custom labels.
 Credential: ../credential
 Share Tools: List Emails
 Share Context: Modify Email Labels Context
 Param: email_id: (Required) The ID of the email to modify.
-Param: archive: (Optional) Set to true to archive the email (remove it from Inbox), or false to unarchive it (add back to Inbox). Default is None (no change).
-Param: mark_as_read: (Optional) Set to true to mark the email as read, or false to mark it as unread. Default is None (no change).
-Param: mark_as_starred: (Optional) Set to true to star the email, or false to remove the star. Default is None (no change).
-Param: mark_as_important: (Optional) Set to true to mark the email as important, or false to remove the important label. Default is None (no change).
-Param: add_label_ids: (Optional) A comma-separated list of custom label_ids to add to the email. Default is an empty list.
-Param: remove_label_ids: (Optional) A comma-separated list of custom label_ids to remove from the email. Default is an empty list.
+Param: apply_action_to_thread: (Optional) Set to true to apply all label updates and status changes (such as archive, mark as read, star, important, etc.) to every message in the thread the email belongs to. Default is false.
+Param: archive: (Optional) Set to true to archive (remove from Inbox) or false to unarchive (add back to Inbox). Default is None (no change).
+Param: mark_as_read: (Optional) Set to true to mark as read, or false to mark as unread. Default is None (no change).
+Param: mark_as_starred: (Optional) Set to true to star the email, or false to unstar it. Default is None (no change).
+Param: mark_as_important: (Optional) Set to true to mark as important, or false to remove importance. Default is None (no change).
+Param: add_label_ids: (Optional) A comma-separated list of label IDs to add. Default is an empty list.
+Param: remove_label_ids: (Optional) A comma-separated list of label IDs to remove. Default is an empty list.
+
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py modify_message_labels
 
