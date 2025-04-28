@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/commands"
 	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/graph"
@@ -33,8 +34,9 @@ func main() {
 		}
 		loc, err := time.LoadLocation(timezone)
 		if err != nil {
-			fmt.Println("Error loading location: %s. Error: %s", timezone, err)
-			os.Exit(1)
+			fmt.Printf("Error loading user timezone: %s. Error: %v. Falling back to UTC.\n", timezone, err)
+			timezone = "UTC"
+			loc = time.UTC // Use UTC location after error
 		}
 		now := time.Now().In(loc)
 		start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
