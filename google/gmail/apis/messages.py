@@ -29,11 +29,13 @@ CATEGORY_LABELS = {
     "CATEGORY_FORUMS": "forums",
 }
 
+
 def modify_message_labels(
     service,
     message_id,
     add_labels=None,
     remove_labels=None,
+    apply_action_to_thread: bool = False,
     archive: Optional[
         bool
     ] = None,  # True = remove 'INBOX', False = add 'INBOX', None = leave unchanged
@@ -113,12 +115,61 @@ def modify_message_labels(
         "removeLabelIds": list(remove_labels),
     }
 
-    return (
-        service.users()
-        .messages()
-        .modify(userId="me", id=message_id, body=body)
-        .execute()
-    )
+    if apply_action_to_thread:
+        try:
+            thread = get_thread_with_message_id(service, message_id)
+            thread_id = thread.get("id")
+            message_ids = [msg["id"] for msg in thread.get("messages", [])]
+            if message_ids:
+                body["ids"] = message_ids
+                service.users().messages().batchModify(
+                    userId="me", body=body
+                ).execute()  # this APIs returns empty response if successful
+            else:
+                raise ValueError(f"No messages found in thread {thread_id}")
+        except Exception as e:
+            raise ValueError(
+                f"Error applying action to thread for message {message_id}: {e}"
+            )
+
+        applied_actions = (
+            f"Added Labels: {add_labels} "
+            if add_labels
+            else "" + f"Removed Labels: {remove_labels}" if remove_labels else ""
+        )
+        response = f"Successfully applied actions:\n{applied_actions}\nto thread {thread_id} with {len(message_ids)} messages."
+        return response
+    try:
+        response = {
+            "Response": service.users()
+            .messages()
+            .modify(userId="me", id=message_id, body=body)
+            .execute()
+        }
+        if "INBOX" in remove_labels:
+            thread = get_thread_with_message_id(service, message_id)
+            thread_messages = thread.get("messages", [])
+            if len(thread_messages) > 1:
+                response["Note"] = (
+                    "This message is part of a thread with multiple emails. The thread will stay in your inbox unless you archive all messages in the conversation."
+                )
+    except HttpError as e:
+        raise Exception(f"Error modifying message labels: {e}")
+    return response
+
+
+def get_thread_with_message_id(service, message_id: str):
+    message = fetch_email_or_draft(service, message_id, format="metadata")
+    thread_id = message.get("threadId")
+    if thread_id:
+        return (
+            service.users()
+            .threads()
+            .get(userId="me", id=thread_id, format="minimal")
+            .execute()
+        )
+    else:
+        raise ValueError(f"No thread found for message {message_id}")
 
 
 async def create_message(
@@ -301,11 +352,11 @@ def format_message_metadata(msg) -> tuple[str, str]:
     read_status = "Read" if "UNREAD" not in label_ids else "Unread"
     category = ""
     label_ids_set = set(label_ids)
-    if "INBOX" in label_ids_set: # Category only applies when message is in inbox
+    if "INBOX" in label_ids_set:  # Category only applies when message is in inbox
         for category_id, category_name in CATEGORY_LABELS.items():
             if category_id in label_ids_set:
                 category = category_name
-                break # Only one category applies
+                break  # Only one category applies
 
     msg_str = f"ID: {msg_id} From: {sender}, Subject: {subject}, To: {to}, CC: {cc}, Bcc: {bcc}, Received: {date},Read_status: {read_status}"
     if category:
@@ -323,13 +374,13 @@ def display_list_messages(service, messages: list):
         print(msg_str)
 
 
-def fetch_email_or_draft(service, obj_id):
+def fetch_email_or_draft(service, obj_id, format="full"):
     try:
         # Try fetching as an email first
         return (
             service.users()
             .messages()
-            .get(userId="me", id=obj_id, format="full")
+            .get(userId="me", id=obj_id, format=format)
             .execute()
         )
     except HttpError as email_err:

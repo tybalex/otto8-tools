@@ -33,6 +33,7 @@ def modify_message_labels_tool():
     mark_as_read = parsed_flags["mark_as_read"]
     mark_as_starred = parsed_flags["mark_as_starred"]
     mark_as_important = parsed_flags["mark_as_important"]
+    apply_action_to_thread = str_to_bool(os.getenv("APPLY_ACTION_TO_THREAD", "False"))
 
     service = client()
     res = modify_message_labels(
@@ -40,6 +41,7 @@ def modify_message_labels_tool():
         email_id,
         add_labels,
         remove_labels,
+        apply_action_to_thread,
         archive,
         mark_as_read,
         mark_as_starred,
