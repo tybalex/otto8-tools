@@ -69,6 +69,7 @@ func main() {
 	case "createEvent":
 		info := graph.CreateEventInfo{
 			Attendees:  strings.Split(os.Getenv("ATTENDEES"), ","),
+			OptionalAttendees: strings.Split(os.Getenv("OPTIONAL_ATTENDEES"), ","),
 			Subject:    os.Getenv("SUBJECT"),
 			Location:   os.Getenv("LOCATION"),
 			Body:       os.Getenv("BODY"),
@@ -112,8 +113,8 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-	case "inviteUserToEvent":
-		if err := commands.InviteUserToEvent(context.Background(), os.Getenv("EVENT_ID"), os.Getenv("CALENDAR_ID"), graph.OwnerType(os.Getenv("OWNER_TYPE")), os.Getenv("USER_EMAIL"), os.Getenv("MESSAGE")); err != nil {
+	case "modifyEventAttendees":
+		if err := commands.ModifyEventAttendees(context.Background(), os.Getenv("EVENT_ID"), os.Getenv("CALENDAR_ID"), graph.OwnerType(os.Getenv("OWNER_TYPE")), os.Getenv("ADD_REQUIRED_ATTENDEES"), os.Getenv("ADD_OPTIONAL_ATTENDEES"), os.Getenv("REMOVE_ATTENDEES")); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}

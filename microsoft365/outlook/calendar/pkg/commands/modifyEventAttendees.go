@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/client"
 	"github.com/obot-platform/tools/microsoft365/outlook/calendar/pkg/global"
@@ -10,7 +11,7 @@ import (
 	"github.com/obot-platform/tools/microsoft365/outlook/common/id"
 )
 
-func InviteUserToEvent(ctx context.Context, eventID, calendarID string, owner graph.OwnerType, userEmail, message string) error {
+func ModifyEventAttendees(ctx context.Context, eventID, calendarID string, owner graph.OwnerType, addRequiredAttendees, addOptionalAttendees, removeAttendees string) error {
 	trueEventID, err := id.GetOutlookID(ctx, eventID)
 	if err != nil {
 		return fmt.Errorf("failed to get Outlook ID: %w", err)
@@ -29,7 +30,18 @@ func InviteUserToEvent(ctx context.Context, eventID, calendarID string, owner gr
 		return fmt.Errorf("failed to create client: %w", err)
 	}
 
-	if err := graph.InviteUserToEvent(ctx, c, trueEventID, trueCalendarID, owner, userEmail, message); err != nil {
+	var addRequiredAttendeesList, addOptionalAttendeesList, removeAttendeesList []string
+	if addRequiredAttendees != "" {
+		addRequiredAttendeesList = strings.Split(addRequiredAttendees, ",")
+	}
+	if addOptionalAttendees != "" {
+		addOptionalAttendeesList = strings.Split(addOptionalAttendees, ",")
+	}
+	if removeAttendees != "" {
+		removeAttendeesList = strings.Split(removeAttendees, ",")
+	}
+
+	if err := graph.ModifyEventAttendee(ctx, c, trueEventID, trueCalendarID, owner, addRequiredAttendeesList, addOptionalAttendeesList, removeAttendeesList); err != nil {
 		return fmt.Errorf("failed to invite user to event: %w", err)
 	}
 
