@@ -21,12 +21,12 @@ from apis.helpers import (
 
 logger = setup_logger(__name__)
 
-CATEGORY_LABELS = {
-    "CATEGORY_PERSONAL": "primary",
-    "CATEGORY_SOCIAL": "social",
-    "CATEGORY_PROMOTIONS": "promotions",
-    "CATEGORY_UPDATES": "updates",
-    "CATEGORY_FORUMS": "forums",
+CATEGORY_IDS = {
+    "CATEGORY_PERSONAL",
+    "CATEGORY_SOCIAL",
+    "CATEGORY_PROMOTIONS",
+    "CATEGORY_UPDATES",
+    "CATEGORY_FORUMS",
 }
 
 
@@ -257,9 +257,9 @@ async def create_message(
     return data
 
 
-async def list_messages(
+def list_messages(
     service, query, labels, max_results=100, after=None, before=None
-):
+) -> list:
     all_messages = []
     next_page_token = None
     if after:
@@ -306,13 +306,16 @@ async def list_messages(
         logger.error(f"Error listing messages: {e}")
         raise Exception(f"Error listing messages: {e}")
 
+    return all_messages
+
+
+async def create_gptscript_dataset(service, all_messages, query, labels) -> str:
     try:
         gptscript_client = gptscript.GPTScript()
 
         elements = []
         if len(all_messages) == 0:
-            print("No messages found")
-            return
+            return ""
 
         for message in all_messages:
             msg_id, msg_str = message_to_string(service, message)
@@ -326,9 +329,9 @@ async def list_messages(
             description=f"list of emails in Gmail for query: [{query}], labels: [{labels}]",
         )
 
-        print(f"Created dataset with ID {dataset_id} with {len(elements)} emails")
+        return f"Created dataset with ID {dataset_id} with {len(elements)} emails"
     except Exception as e:
-        print("An error occurred while creating the dataset:", e)
+        raise Exception(f"An error occurred while creating the dataset: {e}")
 
 
 def message_to_string(service, message) -> tuple[str, str]:
@@ -350,17 +353,16 @@ def format_message_metadata(msg) -> tuple[str, str]:
     msg_id = msg["id"]
     subject, sender, to, cc, bcc, date, label_ids = extract_message_headers(msg)
     read_status = "Read" if "UNREAD" not in label_ids else "Unread"
-    category = ""
+    category = []
     label_ids_set = set(label_ids)
     if "INBOX" in label_ids_set:  # Category only applies when message is in inbox
-        for category_id, category_name in CATEGORY_LABELS.items():
+        for category_id in CATEGORY_IDS:
             if category_id in label_ids_set:
-                category = category_name
-                break  # Only one category applies
+                category.append(category_id)
 
-    msg_str = f"ID: {msg_id} From: {sender}, Subject: {subject}, To: {to}, CC: {cc}, Bcc: {bcc}, Received: {date},Read_status: {read_status}"
+    msg_str = f"ID: {msg_id} From: {sender}, Subject: {subject}, To: {to}, CC: {cc}, Bcc: {bcc}, Received: {date}, Read_status: {read_status}"
     if category:
-        msg_str += f", Category: {category}"
+        msg_str += f", Built-in Categories: [{', '.join(category)}]"
     return (
         msg_id,
         msg_str,
