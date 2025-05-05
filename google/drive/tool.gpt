@@ -171,8 +171,7 @@ When the user requested to operate on a file or permission without specifying th
 
 ---
 !metadata:*:icon
-/admin/assets/google_calendar_icon_2020.png
+/admin/assets/google_drive_icon_2020.png
 
 ---
 !metadata:*:oauth
-google
