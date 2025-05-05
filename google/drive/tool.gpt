@@ -92,7 +92,7 @@ Param: file_id: (Required) ID of the file or folder to delete
 
 ---
 Name: Transfer Ownership
-Description: Transfer ownership of a Google Drive file to another user
+Description: Transfer ownership of a Google Drive file to another user. Can only transfer ownership to a user in the same domain.
 Credential: ../credential
 Share Context: Google Drive Context
 Param: file_id: (Required) ID of the file to transfer ownership of
