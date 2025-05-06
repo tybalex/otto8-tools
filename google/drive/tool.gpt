@@ -1,0 +1,177 @@
+---
+Name: Google Drive
+Description: Tools for interacting with a user's Google Drive account
+Metadata: bundle: true
+Share Tools: List Files, Download File, Copy File, Get File, Create File, Update File, Create Folder, Delete File, Transfer Ownership, List Permissions, Get Permission, Create Permission, Update Permission, Delete Permission
+
+---
+Name: List Files
+Description: List or search for files in the user's Google Drive.
+Credential: ../credential
+Share Context: Google Drive Context
+Tools: github.com/gptscript-ai/datasets/filter
+Param: drive_id: (Optional) ID of the shared Google Drive to list files from. If not provided, default to the user's personal drive.
+Param: parent_id: (Optional) ID of the parent folder to list files from. If not provided, default to the root folder.
+Param: query: (Optional) A query for filtering the file results using Google Drive's query syntax. Example: name contains 'report'(Search by name); mimeType = 'application/pdf'(Search by file mimeType); modifiedTime > '2025-01-01'(Search by modified time)
+Param: max_results: (Optional) Maximum integer number of files to return. If not provided, default to 50.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py list_files
+
+---
+Name: Get File
+Description: Get a Google Drive file from user's Google Drive
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to get
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py get_file
+
+---
+Name: Create File
+Description: Create a new file in user's Google Drive. Optionally, can provide the content by providing a path to a Workspace file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_name: (Required) Name of the new file, MUST come with a file extension.
+Param: mime_type: (Optional) MIME type of the new file, please provide this if you can. If not provided, it will be inferred from the file extension.
+Param: parent_id: (Optional) ID of the parent folder for the new file. If not provided, the file will be created in the root folder.
+Param: workspace_file_path: (Optional) Path to a file in the user's GPTScript workspace. If provided, the file will be used as the content of the new file.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py create_file
+
+---
+Name: Update File
+Description: Update an existing file or folder in user's Google Drive. Can rename and/or move to a different location.
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file or folder to update
+Param: new_name: (Optional) New name for the file or folder
+Param: new_parent_id: (Optional) New parent folder ID. Provide this if you want to move the item to a different folder, use `root` to move to the root folder.
+Param: new_workspace_file_path: (Optional) Path to the new content of the file (not applicable for folders)
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py update_file
+
+---
+Name: Create Folder
+Description: Create a new folder in user's Google Drive.
+Credential: ../credential
+Share Context: Google Drive Context
+Param: folder_name: (Required) Name of the new folder
+Param: parent_id: (Optional) ID of the parent folder for the new folder. If not provided, the folder will be created in the root folder.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py create_folder
+
+---
+Name: Copy File
+Description: Create a copy of a Google Drive file.
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to copy
+Param: new_name: (Optional) New name for the copied file. If not provided, the copied file will be named "Copy of [original name]".
+Param: new_parent_id: (Optional) New parent folder ID for the copied file. Provide this if you want to have the copied file in a different folder.
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py copy_file
+
+---
+Name: Download File
+Description: Download a Google Drive file to the user's GPTScript workspace
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to download
+Param: workspace_file_path: (Required) Path to save the downloaded file in the user's GPTScript workspace
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py download_file
+
+---
+Name: Delete File
+Description: Delete an existing file or folder from user's Google Drive
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file or folder to delete
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py delete_file
+
+---
+Name: Transfer Ownership
+Description: Transfer ownership of a Google Drive file to another user. Can only transfer ownership to a user in the same domain.
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to transfer ownership of
+Param: new_owner_email: (Required) Email address of the new owner
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py transfer_ownership
+
+---
+Name: List Permissions
+Description: List all permissions for a Google Drive file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to list permissions for
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py list_permissions
+
+---
+Name: Get Permission
+Description: Get a specific permission for a Google Drive file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to get permission for
+Param: permission_id: (Required) ID of the permission to get
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py get_permission
+
+---
+Name: Create Permission
+Description: Create a new permission for a Google Drive file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to create permission for
+Param: role: (Required) Role for the new permission, must be one of (owner, organizer, fileOrganizer, writer, commenter, reader)
+Param: type: (Required) Type of the new permission, must be one of (user, group, domain, anyone)
+Param: email_address: (Optional) Email address for user/group permission, required if type is user or group
+Param: domain: (Optional) Domain for domain permission, required if type is domain
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py create_permission
+
+---
+Name: Update Permission
+Description: Update an existing permission for a Google Drive file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to update permission for
+Param: permission_id: (Required) ID of the permission to update
+Param: role: (Optional) New role for the permission, must be one of (owner, organizer, fileOrganizer, writer, commenter, reader)
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py update_permission
+
+---
+Name: Delete Permission
+Description: Delete an existing permission for a Google Drive file
+Credential: ../credential
+Share Context: Google Drive Context
+Param: file_id: (Required) ID of the file to delete permission from
+Param: permission_id: (Required) ID of the permission to delete
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py delete_permission
+
+---
+Name: Google Drive Context
+Type: context
+Share Context: ../../time
+
+#!sys.echo
+
+## Instructions for Using Google Drive Tools
+
+You have access to tools for interacting with the Google Drive API.
+You can use these tools to operate files/folders/drives/permissions on behalf of the user.
+
+When the user requested to operate on a file or permission without specifying the drive, you should assume using the user's personal drive.
+
+## End of instructions for Using Google Drive Tools
+
+---
+!metadata:*:icon
+/admin/assets/google_drive_icon_2020.png
+
+---
+!metadata:*:oauth
