@@ -13,8 +13,11 @@ def list_files(
     service: Resource,
     drive_id: Optional[str] = None,
     parent_id: Optional[str] = None,
-    query: Optional[str] = None,  # TODO: better search file query support
+    mime_type: Optional[str] = None,
+    file_name_contains: Optional[str] = None,
+    modified_time_after: Optional[str] = None,
     max_results: Optional[int] = None,
+    trashed: Optional[bool] = False,
 ) -> List[dict]:
     """
     List files accessible to the user, optionally filtered by drive_id and query.
@@ -51,12 +54,24 @@ def list_files(
                 }
             )
 
-        if parent_id:
-            parent_condition = f"'{parent_id}' in parents"
-            query = f"{parent_condition} and {query}" if query else parent_condition
+        # Build query conditions list
+        query_conditions = ["trashed = true" if trashed else "trashed = false"]
 
-        if query:
-            params["q"] = query
+        if parent_id:
+            query_conditions.append(f"'{parent_id}' in parents")
+
+        if mime_type:
+            query_conditions.append(f"mimeType = '{mime_type}'")
+
+        if file_name_contains:
+            query_conditions.append(f"name contains '{file_name_contains}'")
+
+        if modified_time_after:
+            query_conditions.append(f"modifiedTime > '{modified_time_after}'")
+
+        # Combine all conditions with AND
+        if query_conditions:
+            params["q"] = " and ".join(query_conditions)
 
         while True:
             response = service.files().list(**params).execute()

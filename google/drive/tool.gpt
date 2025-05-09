@@ -2,18 +2,20 @@
 Name: Google Drive
 Description: Tools for interacting with a user's Google Drive account
 Metadata: bundle: true
-Share Tools: List Files, Download File, Copy File, Get File, Create File, Update File, Create Folder, Delete File, Transfer Ownership, List Permissions, Get Permission, Create Permission, Update Permission, Delete Permission
+Share Tools: List Files, Download File, Copy File, Get File, Create File, Update File, Create Folder, Delete File, Transfer Ownership, List Permissions, Get Permission, Create Permission, Update Permission, Delete Permission, Create Shared Drive, Delete Shared Drive, List Shared Drives, Rename Shared Drive
 
 ---
 Name: List Files
-Description: List or search for files in the user's Google Drive.
+Description: List or search for files in the user's Google Drive. Returns up to 50 files by default, sorted by last modified date.
 Credential: ../credential
 Share Context: Google Drive Context
 Tools: github.com/gptscript-ai/datasets/filter
-Param: drive_id: (Optional) ID of the shared Google Drive to list files from. If not provided, default to the user's personal drive.
-Param: parent_id: (Optional) ID of the parent folder to list files from. If not provided, default to the root folder.
-Param: query: (Optional) A query for filtering the file results using Google Drive's query syntax. Example: name contains 'report'(Search by name); mimeType = 'application/pdf'(Search by file mimeType); modifiedTime > '2025-01-01'(Search by modified time)
-Param: max_results: (Optional) Maximum integer number of files to return. If not provided, default to 50.
+Param: drive_id: (Optional) ID of the Google Drive to list files from. If unset, default to the user's personal drive.
+Param: parent_id: (Optional) ID of the parent folder to list files from. If unset, default to the root folder of user's personal drive.
+Param: mime_type: (Optional) Filter files by MIME type (e.g., 'application/pdf' for PDFs, 'image/jpeg' for JPEG images, 'application/vnd.google-apps.folder' for folders). If unset, returns all file types.
+Param: file_name_contains: (Optional) Case-insensitive search string to filter files by name. Returns files containing this string in their name.
+Param: modified_time_after: (Optional) Return only files modified after this timestamp (RFC 3339 format: YYYY-MM-DDTHH:MM:SSZ, e.g., '2024-03-20T10:00:00Z').
+Param: max_results: (Optional) Maximum number of files to return (default: 50, must be a positive integer).
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py list_files
 
@@ -102,31 +104,31 @@ Param: new_owner_email: (Required) Email address of the new owner
 
 ---
 Name: List Permissions
-Description: List all permissions for a Google Drive file
+Description: List all permissions for a Google Drive file, folder, or shared drive.
 Credential: ../credential
 Share Context: Google Drive Context
-Param: file_id: (Required) ID of the file to list permissions for
+Param: file_id: (Required) ID of the file, folder, or shared drive to list permissions for
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py list_permissions
 
 ---
 Name: Get Permission
-Description: Get a specific permission for a Google Drive file
+Description: Get a specific permission for a Google Drive file, folder, or shared drive.
 Credential: ../credential
 Share Context: Google Drive Context
-Param: file_id: (Required) ID of the file to get permission for
+Param: file_id: (Required) ID of the file, folder, or shared drive to get permission for
 Param: permission_id: (Required) ID of the permission to get
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py get_permission
 
 ---
 Name: Create Permission
-Description: Create a new permission for a Google Drive file
+Description: Create a new permission for a Google Drive file, folder, or shared drive.
 Credential: ../credential
 Share Context: Google Drive Context
-Param: file_id: (Required) ID of the file to create permission for
-Param: role: (Required) Role for the new permission, must be one of (owner, organizer, fileOrganizer, writer, commenter, reader)
-Param: type: (Required) Type of the new permission, must be one of (user, group, domain, anyone)
+Param: file_id: (Required) ID of the file, folder, or shared drive to create permission for
+Param: role: (Required) Role for the new permission, must be one of [owner(for My Drive), organizer(for shared drive), fileOrganizer(for shared drive), writer, commenter, reader]
+Param: type: (Required) Type of the new permission, must be one of [user, group, domain, anyone]
 Param: email_address: (Optional) Email address for user/group permission, required if type is user or group
 Param: domain: (Optional) Domain for domain permission, required if type is domain
 
@@ -134,24 +136,60 @@ Param: domain: (Optional) Domain for domain permission, required if type is doma
 
 ---
 Name: Update Permission
-Description: Update an existing permission for a Google Drive file
+Description: Update an existing permission for a Google Drive file, folder, or shared drive.
 Credential: ../credential
 Share Context: Google Drive Context
-Param: file_id: (Required) ID of the file to update permission for
+Param: file_id: (Required) ID of the file, folder, or shared drive to update permission for
 Param: permission_id: (Required) ID of the permission to update
-Param: role: (Optional) New role for the permission, must be one of (owner, organizer, fileOrganizer, writer, commenter, reader)
+Param: role: (Optional) New role for the permission, must be one of [owner(for My Drive), organizer(for shared drive), fileOrganizer(for shared drive), writer, commenter, reader]
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py update_permission
 
 ---
 Name: Delete Permission
-Description: Delete an existing permission for a Google Drive file
+Description: Delete an existing permission for a Google Drive file, folder, or shared drive.
 Credential: ../credential
 Share Context: Google Drive Context
-Param: file_id: (Required) ID of the file to delete permission from
+Param: file_id: (Required) ID of the file, folder, or shared drive to delete permission from
 Param: permission_id: (Required) ID of the permission to delete
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py delete_permission
+
+---
+Name: Create Shared Drive
+Description: Create a new shared Google Drive for the user
+Credential: ../credential
+Share Context: Google Drive Context
+Param: drive_name: (Required) Name of the new shared drive
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py create_shared_drive
+
+---
+Name: Delete Shared Drive
+Description: Delete an existing shared Google Drive
+Credential: ../credential
+Share Context: Google Drive Context
+Param: drive_id: (Required) ID of the shared drive to delete
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py delete_shared_drive
+
+---
+Name: List Shared Drives
+Description: List all shared Google Drives for the user
+Credential: ../credential
+Share Context: Google Drive Context
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py list_shared_drives
+
+---
+Name: Rename Shared Drive
+Description: Rename an existing shared Google Drive
+Credential: ../credential
+Share Context: Google Drive Context
+Param: drive_id: (Required) ID of the shared drive to rename
+Param: drive_name: (Required) New name for the shared drive
+
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/main.py update_shared_drive
 
 ---
 Name: Google Drive Context
@@ -167,6 +205,14 @@ You can use these tools to operate files/folders/drives/permissions on behalf of
 
 When the user requested to operate on a file or permission without specifying the drive, you should assume using the user's personal drive.
 
+ALWAYS ask for user's confirmation before deleting a file/folder/shared_drive/permission.
+
+the drive id of a shared drive is the same as the drive id of the root folder of the shared drive.
+
+ALWAYS show links to files/folders/shared_drives/permissions in your response in markdown format: [link text](link url)
+
+Don't show IDs in your response to the user unless the user asks for it.
+
 ## End of instructions for Using Google Drive Tools
 
 ---
@@ -175,3 +221,4 @@ When the user requested to operate on a file or permission without specifying th
 
 ---
 !metadata:*:oauth
+google
