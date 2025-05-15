@@ -56,8 +56,8 @@ func (s *Server) Openaiv1ProxyRedirect(req *http.Request) {
 		reqBody.StreamOptions.IncludeUsage = true
 	}
 
-	if isModelO1(reqBody.Model) {
-		modifyRequestBodyForO1(&reqBody)
+	if isReasoningModel(reqBody.Model) {
+		modifyRequestBodyForReasoningModel(&reqBody)
 	}
 
 	modifiedBodyBytes, err := json.Marshal(reqBody)
@@ -70,8 +70,9 @@ func (s *Server) Openaiv1ProxyRedirect(req *http.Request) {
 	}
 }
 
-func modifyRequestBodyForO1(reqBody *openai.ChatCompletionRequest) {
-	reqBody.Temperature = nil
+func modifyRequestBodyForReasoningModel(reqBody *openai.ChatCompletionRequest) {
+	// temperature is not supported for reasoning models. It must be 1.0
+	reqBody.Temperature = &[]float32{1.0}[0]
 	for i, msg := range reqBody.Messages {
 		if msg.Role == "system" {
 			reqBody.Messages[i].Role = "developer"
@@ -79,9 +80,6 @@ func modifyRequestBodyForO1(reqBody *openai.ChatCompletionRequest) {
 	}
 }
 
-func isModelO1(model string) bool {
-	if model == "o1" {
-		return true
-	}
-	return strings.HasPrefix(model, "o1-") && !strings.HasPrefix(model, "o1-mini") && !strings.HasPrefix(model, "o1-preview")
+func isReasoningModel(model string) bool {
+	return (strings.HasPrefix(model, "o1") && !strings.HasPrefix(model, "o1-mini") && !strings.HasPrefix(model, "o1-preview")) || strings.HasPrefix(model, "o3") || strings.HasPrefix(model, "o4")
 }
