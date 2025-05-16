@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gptscript-ai/go-gptscript"
@@ -15,7 +17,18 @@ import (
 	"github.com/obot-platform/tools/microsoft365/outlook/common/id"
 )
 
-func ListEvents(ctx context.Context, start, end time.Time) error {
+func ListEvents(ctx context.Context, calendarIDstring string, start, end time.Time, limit string) error {
+	var limitInt int32
+	if limit == "" {
+		limitInt = 50 // default limit
+	} else {
+		limitInt64, err := strconv.ParseInt(limit, 10, 32)
+		if err != nil {
+			return fmt.Errorf("invalid limit value provided: (%s) %w. must be a positive integer", limit, err)
+		}
+		limitInt = int32(limitInt64)
+	}
+
 	c, err := client.NewClient(global.ReadOnlyScopes)
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
@@ -34,13 +47,39 @@ func ListEvents(ctx context.Context, start, end time.Time) error {
 		return fmt.Errorf("failed to set calendar IDs: %w", err)
 	}
 
+	// Parse requested calendar IDs and see if match any of the actual calendar IDs
+	if calendarIDstring != "" {
+		ids := strings.Split(calendarIDstring, ",")
+		for i := range ids {
+			ids[i] = strings.TrimSpace(ids[i])
+		}
+
+		idMap, err := id.GetOutlookIDs(ctx, ids)
+		if err != nil {
+			return fmt.Errorf("failed to get Outlook IDs: %w", err)
+		}
+
+		requestedIDsSet := make(map[string]struct{}, len(idMap))
+		for _, v := range idMap {
+			requestedIDsSet[v] = struct{}{}
+		}
+
+		filtered := calendars[:0] // reuse underlying array
+		for _, cal := range calendars {
+			if _, ok := requestedIDsSet[cal.ID]; ok {
+				filtered = append(filtered, cal)
+			}
+		}
+		calendars = filtered
+	}
+
 	calendarEvents := map[graph.CalendarInfo][]models.Eventable{}
 	for _, cal := range calendars {
 		if cal.ID == "" {
 			continue
 		}
 
-		events, err := graph.ListCalendarView(ctx, c, cal.ID, cal.Owner, &start, &end)
+		events, err := graph.ListCalendarView(ctx, c, cal.ID, cal.Owner, &start, &end, limitInt)
 		if err != nil {
 			return fmt.Errorf("failed to list events for calendar %s: %w", util.Deref(cal.Calendar.GetName()), err)
 		}
