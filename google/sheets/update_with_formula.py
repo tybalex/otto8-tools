@@ -4,18 +4,19 @@ from auth import gspread_client
 from gspread.utils import a1_range_to_grid_range, rowcol_to_a1, ValueInputOption
 from gspread.exceptions import APIError
 
+
 def update_with_formula():
-    spreadsheet_id = os.getenv('SPREADSHEET_ID')
+    spreadsheet_id = os.getenv("SPREADSHEET_ID")
     if spreadsheet_id is None:
         raise ValueError("spreadsheet_id parameter must be set")
 
-    sheet_name = os.getenv('SHEET_NAME')
+    sheet_name = os.getenv("SHEET_NAME")
 
-    target_range = os.getenv('TARGET_RANGE')
+    target_range = os.getenv("TARGET_RANGE")
     if target_range is None:
         raise ValueError("target_range parameter must be set")
 
-    formula_template = os.getenv('FORMULA_TEMPLATE')
+    formula_template = os.getenv("FORMULA_TEMPLATE")
     if formula_template is None:
         raise ValueError("formula_template parameter must be set")
     if not formula_template.startswith("="):
@@ -24,8 +25,7 @@ def update_with_formula():
     service = gspread_client()
 
     try:
-        spreadsheet = service.open_by_key(
-            spreadsheet_id)
+        spreadsheet = service.open_by_key(spreadsheet_id)
         if sheet_name is not None:
             sheet = spreadsheet.worksheet(sheet_name)
         else:
@@ -49,7 +49,12 @@ def update_with_formula():
 
     try:
         grid = a1_range_to_grid_range(target_range)
-        start_col, start_row, end_col, end_row = grid["startColumnIndex"], grid["startRowIndex"], grid["endColumnIndex"], grid["endRowIndex"]
+        start_col, start_row, end_col, end_row = (
+            grid["startColumnIndex"],
+            grid["startRowIndex"],
+            grid["endColumnIndex"],
+            grid["endRowIndex"],
+        )
     except Exception as err:
         print(f"Error parsing target_range {target_range}: {err}")
         return
@@ -60,7 +65,7 @@ def update_with_formula():
         for c in range(start_col, end_col):
             # get the column letter ("A", "B", ..., "AA", etc.)
             col_letter = rowcol_to_a1(1, c)[:-1]
-            row_formulas.append(formula_template.format(row=r+1, col=col_letter))
+            row_formulas.append(formula_template.format(row=r + 1, col=col_letter))
         formulas.append(row_formulas)
 
     try:
@@ -87,6 +92,7 @@ def update_with_formula():
             print(f"Error updating cells with formula {formula_template}: {e}")
             exit(1)
     print(f"Successfully updated {target_range} with formula {formula_template}")
+
 
 if __name__ == "__main__":
     update_with_formula()

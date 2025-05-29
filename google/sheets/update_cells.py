@@ -6,13 +6,14 @@ from gspread.worksheet import Cell
 from gspread.utils import ValueInputOption
 from auth import gspread_client
 
+
 def update_cells():
-    spreadsheet_id = os.getenv('SPREADSHEET_ID')
+    spreadsheet_id = os.getenv("SPREADSHEET_ID")
     if spreadsheet_id is None:
         raise ValueError("spreadsheet_id parameter must be set")
-    sheet_name = os.getenv('SHEET_NAME')
+    sheet_name = os.getenv("SHEET_NAME")
 
-    update_cells = os.getenv('UPDATE_CELLS')
+    update_cells = os.getenv("UPDATE_CELLS")
     if update_cells is None:
         raise ValueError("update_cells parameter must be set")
     try:
@@ -26,7 +27,7 @@ def update_cells():
 
     data_cells = []
     formula_cells = []
-    
+
     try:
         for cell in update_cells_object:
             if not all(key in cell for key in ("coordinate", "data")):
@@ -55,7 +56,9 @@ def update_cells():
         if len(data_cells) > 0:
             sheet.update_cells(data_cells)
         if len(formula_cells) > 0:
-            sheet.update_cells(formula_cells, value_input_option=ValueInputOption.user_entered)
+            sheet.update_cells(
+                formula_cells, value_input_option=ValueInputOption.user_entered
+            )
     except Exception as err:
         print(f"Error updating cells: {err}")
         exit(1)
