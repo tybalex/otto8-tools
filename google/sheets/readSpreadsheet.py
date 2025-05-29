@@ -19,8 +19,10 @@ async def main():
             sheet = spreadsheet.sheet1
         else:
             sheet = spreadsheet.worksheet(sheet_name)
+
+        all_values = sheet.get_all_values()
         if range is None:
-            values = sheet.get_all_values()
+            values = all_values
         else:
             values = sheet.get(range)
 
@@ -28,6 +30,11 @@ async def main():
             print("No data found.")
             return
         else:
+            print(f"Overview of the sheet: {len(all_values)} rows and {len(all_values[0])} columns")
+            if range is None:
+                print("Sheet data:")
+            else:
+                print(f"Data in range {range}:")
             for row in values:
                 print(row)
 
