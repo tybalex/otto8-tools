@@ -8,50 +8,50 @@ Share Tools: Read Spreadsheet, Query Spreadsheet, Read Tables From Spreadsheet, 
 
 ---
 Name: Read Spreadsheet
-Description: Read data from a Google Sheet. Spreadsheet ID is required if the spreadsheet does not belong to the user.
+Description: Read data from a Google Sheet.
 Share Context: Google Sheets Context
 Credential: ../credential
 Param: spreadsheet_id: (Required) The ID of the Spreadsheet
 Param: range: (Optional) A1 notation of the cells to read (e.g. "A2:D100" or "A1:Z5"), defaults to the entire sheet, can also be a single cell (e.g. "A1")
-Param: sheet_name: (Optional) The name of the page to read from, defaults to the first page.
+Param: sheet_name: (Optional) The name of the sheet to read from, defaults to the first sheet
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/readSpreadsheet.py
 
 ---
 Name: Query Spreadsheet
-Description: Filter and query specific data from a Google Sheet using a SQL-like syntax. Spreadsheet ID is required if the spreadsheet does not belong to the user.
+Description: Filter and query specific data from a Google Sheet using SQL-like syntax. Perfect for finding rows that match certain criteria.
 Share Context: Google Sheets Context
 Credential: ../credential
-Param: spreadsheet_id: The ID of the Spreadsheet
-Param: query: The sql-like query to run against the spreadsheet. Should be the format expected by the pandas query function (e.g. "column1 == 'value1' and column2 > 10")
-Param: show_columns: a comma-delimited list of columns to show in the output (Optional, by default shows first 5 columns)
-Param: sheet_name: The name of the page to read from (Optional, by default reads the first page)
+Param: spreadsheet_id: (Required) The ID of the Spreadsheet
+Param: query: (Required) The SQL-like query using pandas syntax (e.g. "column1 == 'value1' and column2 > 10")
+Param: show_columns: (Optional) Comma-delimited list of columns to include in output, defaults to first 5 columns
+Param: sheet_name: (Optional) The name of the sheet to read from, defaults to the first sheet
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/querySpreadsheet.py
 
 ---
 Name: Read Tables From Spreadsheet
-Description: Detect multiple tables and read data from a Google Sheet. Spreadsheet ID is required if the spreadsheet does not belong to the user.
+Description: Automatically detect and extract multiple tables from a Google Sheet. Useful when a sheet contains separate data tables with blank rows between them.
 Share Context: Google Sheets Context
 Credential: ../credential
-Param: spreadsheet_id: The ID of the Spreadsheet
-Param: range: The range of cells on the Spreadsheet to read (Optional, by default reads the entire Spreadsheet)
-Param: sheet_name: The name of the page to read from (Optional, by default reads the first page)
+Param: spreadsheet_id: (Required) The ID of the Spreadsheet
+Param: range: (Optional) A1 notation of cells to read, defaults to the entire sheet
+Param: sheet_name: (Optional) The name of the sheet to read from, defaults to the first sheet
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/readTablesFromSpreadsheet.py
 
 ---
 Name: Create Spreadsheet
-Description: Create a new Google Sheet
+Description: Create a new Google Sheet with the specified name. Returns the ID of the newly created spreadsheet.
 Share Context: Google Sheets Context
 Credential: ../credential
-Param: spreadsheet_name: The name of the spreadsheet to create
+Param: spreadsheet_name: (Required) The name of the spreadsheet to create
 
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/createSpreadsheet.py
 
 ---
 Name: Update With Formula
-Description: Append or update data within one or more cells in a row or column in a Google Sheet using a formula.
+Description: Apply the same formula pattern across an entire row or column in a Google Sheet. Perfect for creating sequences, calculated fields, or applying uniform formulas with row/column references that automatically adjust (e.g., creating running totals, sequential numbering, or formulas that reference position-relative data).
 Share Context: Google Sheets Context
 Credential: ../credential
 Param: spreadsheet_id: (Required) The ID of the Spreadsheet
@@ -63,7 +63,7 @@ Param: formula_template: (Required) a template for Google Sheets formulas that s
 
 ---
 Name: Update Cells In Spreadsheet
-Description: Update data within one or more cells in a Google Sheet.
+Description: Update individual cells with specific values or formulas in a Google Sheet. Use when you need to update different cells with unique content (unlike Update With Formula which applies the same pattern across a range). Perfect for inserting varied data, custom formulas at specific locations, or making targeted changes to a spreadsheet.
 Share Context: Google Sheets Context
 Credential: ../credential
 Param: spreadsheet_id: (Required) The ID of the Spreadsheet
@@ -79,15 +79,16 @@ Type: context
 #!sys.echo
 
 <google_sheets_tools_instructions>
-You have access to a set of tools to access, create, and modify Google Sheets.
-Do not output sheet IDs because they are not helpful for the user.
-If the user does not provide a URL for the Google Sheet they want to work with, ask them to provide it.
+You can access, create, and modify Google Sheets via available tools.
 
-When reading data from a Google Sheet, always start by reading just the 2 rows to determine if the first row contains column names.
-If the user asks to filter or list only specific information from the spreadsheet, try to use the 'Query Spreadsheet' tool.
-Write the query such that it returns the minimum number of columns and rows necessary to answer the user request.
-
-Do your best to always return the complete data that the user asked for, even if it is a large dataset.
+1. Always ask the user to supply the sheet URL if spreadsheet_id is not provided.
+2. Never expose raw sheet IDs in your output.
+3. To detect headers, initially read only the first two rows:
+   - If row 1 contains column names, treat it as headers.
+   - Otherwise proceed without headers.
+4. For filtering or selecting specific fields, prefer the "Query Spreadsheet" tool:
+   - Craft your query to fetch only the columns and rows needed.
+5. When the user requests full data, return the complete range—even if large.
 </google_sheets_tools_instructions>
 
 ---
