@@ -4,7 +4,7 @@ Description: Create, read, and write to spreadsheets in Google Sheets
 Metadata: bundle: true
 Metadata: mcp: true
 Metadata: categories: Official,Data & Analytics,Office Productivity
-Share Tools: Read Spreadsheet, Query Spreadsheet, Read Tables From Spreadsheet, Create Spreadsheet, Append Cells To Spreadsheet, Update Cells In Spreadsheet, Update With Formula
+Share Tools: Read Spreadsheet, Query Spreadsheet, Read Tables From Spreadsheet, Create Spreadsheet, Update Cells In Spreadsheet, Update With Formula
 
 ---
 Name: Read Spreadsheet
@@ -62,24 +62,15 @@ Param: formula_template: (Required) a template for Google Sheets formulas that s
 #!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/update_with_formula.py
 
 ---
-Name: Append Cells To Spreadsheet
-Description: Append data to a Google Sheet.
-Share Context: Google Sheets Context
-Credential: ../credential
-Param: spreadsheet_id: (Required) The ID of the Spreadsheet
-Param: data: (Required) The data to append to the Spreadsheet. Columns are separated by commas and rows are separated by newlines. Newlines inside a cell should be represented by CR LF characters. The data in each cell must be wrapped in double quotes and escape any characters that would break csv parsing (e.g. '"A1","B1, ""this is a quoted string""","C1"\n"A2","B2","C2"\n"A3","B3","C3\r\nwith newline"')
-
-#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/appendCellsToSpreadsheet.py
-
----
 Name: Update Cells In Spreadsheet
 Description: Update data within one or more cells in a Google Sheet.
 Share Context: Google Sheets Context
 Credential: ../credential
 Param: spreadsheet_id: (Required) The ID of the Spreadsheet
-Param: update_cells: (Required) A json list of objects that contains the row, column. and the data to put in that cell. Each object in the list should have the following format: `{"row": 1,"column":1,"value": "New Value"}`. Row and Column indexes start at 1.
+Param: sheet_name: (Optional) The name of the page to read from, defaults to the first page
+Param: update_cells: (Required) A json list of objects that each contains the `coordinate` and the `data` field, the coordinate is an A1 notation of the cell to update, e.g. "A1", "B2", etc, the data is either a string or a formula. Example: [{"coordinate": "A1", "data": "New Value"}, {"coordinate": "B2", "data": "=SUM(A1:A2)"}]
 
-#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/updateCellsInSpreadsheet.py
+#!/usr/bin/env python3 ${GPTSCRIPT_TOOL_DIR}/update_cells.py
 
 ---
 Name: Google Sheets Context
