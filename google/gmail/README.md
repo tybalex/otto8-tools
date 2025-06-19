@@ -9,9 +9,6 @@
 ```bash
 # Run directly from the current directory
 uvx --from . obot-gmail-mcp
-
-# Or install and run from PyPI (once published)
-uvx obot-gmail-mcp
 ```
 
 ### Using uv (development)
