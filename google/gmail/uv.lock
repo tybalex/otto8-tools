@@ -438,7 +438,7 @@ wheels = [
 [[package]]
 name = "obot-gmail-mcp"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "bs4" },
     { name = "fastmcp" },

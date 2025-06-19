@@ -6,7 +6,7 @@ from apis.helpers import get_client, parse_label_ids, NON_PRIMARY_CATEGORIES_MAP
 from apis.messages import list_messages, message_to_string, modify_message_labels, create_message_data, fetch_email_or_draft, get_email_body, has_attachment, format_message_metadata
 from googleapiclient.errors import HttpError
 from fastmcp.exceptions import ToolError
-from apis.drafts import list_drafts, update_draft as update_draft_func
+from apis.drafts import list_drafts, update_draft
 from apis.labels import list_labels, get_label, create_label, update_label, delete_label
 
 # Configure server-specific settings
@@ -97,7 +97,7 @@ async def list_emails(
 @mcp.tool(
     exclude_args=["cred_token"],
 )
-async def list_drafts(
+def list_drafts(
     max_results: Annotated[int, Field(description="Maximum number of drafts to return.", ge=1, le=1000)] = 100,
     cred_token: str = None
 ) -> list:
@@ -105,7 +105,7 @@ async def list_drafts(
     List drafts in the user's gmail account.
     """
     service = get_client(cred_token)
-    drafts = await list_drafts(service, max_results)
+    drafts = list_drafts(service, max_results)
     return drafts
 
 @mcp.tool(
@@ -279,9 +279,9 @@ def delete_draft(
         service.users().drafts().delete(userId="me", id=draft_id).execute()
         return f"Draft Id: {draft_id} deleted successfully!"
     except HttpError as err:
-        raise HttpError(f"Error deleting draft, HttpError: {err}")
+        raise ToolError(str(err))
     except Exception as err:
-        raise Exception(f"Unexpected error deleting draft, Exception: {err}")
+        raise ToolError(str(err))
 
 @mcp.tool(
     exclude_args=["cred_token"],
@@ -298,9 +298,9 @@ def delete_email(
         service.users().messages().trash(userId="me", id=email_id).execute()
         return f"Email Id: {email_id} deleted successfully!"
     except HttpError as err:
-        raise HttpError(f"Error deleting email, HttpError: {err}")
+        raise ToolError(str(err))
     except Exception as err:
-        raise Exception(f"Unexpected error deleting email, Exception: {err}")
+        raise ToolError(str(err))
 
 @mcp.tool(
     exclude_args=["cred_token"],
@@ -337,9 +337,9 @@ def read_email(
             result["link"] = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
         return result
     except HttpError as err:
-        raise HttpError(f"Error sending draft, HttpError: {err}")
+        raise ToolError(str(err))
     except Exception as err:
-        raise Exception(f"Unexpected error sending draft, Exception: {err}")
+        raise ToolError(str(err))
 
 @mcp.tool(
     exclude_args=["cred_token"],
@@ -356,9 +356,9 @@ def send_draft(
         sent_message = service.users().drafts().send(userId="me", body={"id": draft_id}).execute()
         return f"Draft Id: {draft_id} sent successfully! Message Id: {sent_message['id']}"
     except HttpError as err:
-        raise HttpError(f"Error sending email, HttpError: {err}")
+        raise ToolError(str(err))
     except Exception as err:
-        raise Exception(f"Unexpected error sending email, Exception: {err}")
+        raise ToolError(str(err))
 
 @mcp.tool(
     exclude_args=["cred_token"],
@@ -416,7 +416,7 @@ async def update_draft(
     service = get_client(cred_token)
     # att_list = [a.strip() for a in attachments if a.strip()] if attachments else []
     try:
-        await update_draft_func(
+        update_draft(
             service=service,
             draft_id=draft_id,
             to=to_emails,
@@ -431,9 +431,9 @@ async def update_draft(
         )
         return f"Draft Id: {draft_id} updated successfully!"
     except HttpError as err:
-        raise HttpError(f"Error updating draft, HttpError: {err}")
+        raise ToolError(str(err))
     except Exception as err:
-        raise Exception(f"Unexpected error updating draft, Exception: {err}")
+        raise ToolError(str(err))
 
 @mcp.tool(
     annotations={"readOnlyHint": True, "destructiveHint": False},
@@ -461,9 +461,9 @@ def list_attachments(
                     })
         return attachments
     except HttpError as error:
-        raise HttpError(f"Error listing attachments, HttpError: {error}")
+        raise ToolError(str(error))
     except Exception as error:
-        raise Exception(f"Unexpected error listing attachments, Exception: {error}")
+        raise ToolError(str(error))
 
 # TODO: tools missing:
 # - read_attachment: need supports of something like a gptscript knowledge tool

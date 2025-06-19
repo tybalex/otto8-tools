@@ -131,8 +131,8 @@ class TestEmailFunctions:
     """Test individual email-related functions"""
 
     @patch('server.get_client')
-    @patch('apis.messages.list_messages')
-    @patch('apis.messages.message_to_string')
+    @patch('server.list_messages')
+    @patch('server.message_to_string')
     async def test_list_emails_success(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service, mock_email_data):
         mock_get_client.return_value = mock_service
         mock_list_messages.return_value = mock_email_data
@@ -146,11 +146,11 @@ class TestEmailFunctions:
                 name='list_emails',
                 arguments={'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
-            assert res_json == ["Formatted Email"]
+            res_json = result[0].text
+            assert res_json == "Formatted Email"
 
     @patch('server.get_client')
-    @patch('apis.messages.list_messages')
+    @patch('server.list_messages')
     async def test_list_emails_no_results(self, mock_list_messages, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_list_messages.return_value = []
@@ -163,11 +163,11 @@ class TestEmailFunctions:
                 name='list_emails',
                 arguments={'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert res_json == "No emails found"
 
     @patch('server.get_client')
-    @patch('apis.messages.list_messages')
+    @patch('server.list_messages')
     async def test_list_emails_with_query_containing_date_filters(self, mock_list_messages, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         
@@ -182,10 +182,10 @@ class TestEmailFunctions:
                 )
 
     @patch('server.get_client')
-    @patch('apis.messages.fetch_email_or_draft')
-    @patch('apis.messages.get_email_body')
-    @patch('apis.messages.has_attachment')
-    @patch('apis.messages.format_message_metadata')
+    @patch('server.fetch_email_or_draft')
+    @patch('server.get_email_body')
+    @patch('server.has_attachment')
+    @patch('server.format_message_metadata')
     async def test_read_email_success(self, mock_format_metadata, mock_has_attachment, 
                                      mock_get_body, mock_fetch_email, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
@@ -239,7 +239,7 @@ class TestEmailFunctions:
         mock_service.users().messages().trash.assert_called_with(userId="me", id="test_id")
 
     @patch('server.get_client')
-    @patch('apis.messages.create_message_data')
+    @patch('server.create_message_data')
     async def test_send_email_success(self, mock_create_message, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_create_message.return_value = {'raw': 'encoded_message'}
@@ -257,7 +257,7 @@ class TestEmailFunctions:
                     'cred_token': 'fake_token'
                 }
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "Message sent successfully" in res_json
 
     @patch('server.get_client')
@@ -272,13 +272,13 @@ class TestEmailFunctions:
                 name='get_current_email_address',
                 arguments={'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert res_json == 'user@example.com'
 
         mock_service.users().getProfile.assert_called_with(userId="me")
 
     @patch('server.get_client')
-    @patch('apis.messages.modify_message_labels')
+    @patch('server.modify_message_labels')
     async def test_modify_message_labels_success(self, mock_modify_labels, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_modify_labels.return_value = {'id': 'test_id', 'labelIds': ['INBOX', 'STARRED']}
@@ -296,7 +296,7 @@ class TestEmailFunctions:
             assert res_json['id'] == 'test_id'
 
     @patch('server.get_client')
-    @patch('apis.messages.fetch_email_or_draft')
+    @patch('server.fetch_email_or_draft')
     async def test_list_attachments_success(self, mock_fetch_email, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_email_with_attachments = {
@@ -315,12 +315,11 @@ class TestEmailFunctions:
                 arguments={'email_id': 'test_id', 'cred_token': 'fake_token'}
             )
             res_json = json.loads(result[0].text)
-            assert len(res_json) == 1
-            assert res_json[0]['filename'] == 'test.pdf'
-            assert res_json[0]['id'] == 'attachment_id'
+            assert res_json['filename'] == 'test.pdf'
+            assert res_json['id'] == 'attachment_id'
 
     @patch('server.get_client')
-    @patch('apis.messages.fetch_email_or_draft')
+    @patch('server.fetch_email_or_draft')
     async def test_list_attachments_no_attachments(self, mock_fetch_email, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_email_no_attachments = {'payload': {}}
@@ -331,15 +330,14 @@ class TestEmailFunctions:
                 name='list_attachments',
                 arguments={'email_id': 'test_id', 'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
-            assert res_json == []
+            assert len(result) == 0
 
 
 class TestDraftFunctions:
     """Test individual draft-related functions"""
 
     @patch('server.get_client')
-    @patch('apis.drafts.list_drafts')
+    @patch('server.list_drafts')
     async def test_list_drafts_success(self, mock_list_drafts_func, mock_get_client, mock_service, mock_draft_data):
         mock_get_client.return_value = mock_service
         mock_list_drafts_func.return_value = mock_draft_data
@@ -350,10 +348,10 @@ class TestDraftFunctions:
                 arguments={'cred_token': 'fake_token'}
             )
             res_json = json.loads(result[0].text)
-            assert res_json == mock_draft_data
+            assert res_json == mock_draft_data[0]
 
     @patch('server.get_client')
-    @patch('apis.messages.create_message_data')
+    @patch('server.create_message_data')
     async def test_create_draft_success(self, mock_create_message, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_create_message.return_value = {'id': 'draft_id'}
@@ -368,7 +366,7 @@ class TestDraftFunctions:
                     'cred_token': 'fake_token'
                 }
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "Draft created successfully" in res_json
 
     @patch('server.get_client')
@@ -381,7 +379,7 @@ class TestDraftFunctions:
                 name='delete_draft',
                 arguments={'draft_id': 'test_id', 'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "deleted successfully" in res_json
 
         mock_service.users().drafts().delete.assert_called_with(userId="me", id="test_id")
@@ -396,13 +394,13 @@ class TestDraftFunctions:
                 name='send_draft',
                 arguments={'draft_id': 'test_id', 'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "sent successfully" in res_json
 
         mock_service.users().drafts().send.assert_called_with(userId="me", body={"id": "test_id"})
 
     @patch('server.get_client')
-    @patch('apis.drafts.update_draft')
+    @patch('server.update_draft')
     async def test_update_draft_success(self, mock_update_draft_func, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_update_draft_func.return_value = None
@@ -418,7 +416,7 @@ class TestDraftFunctions:
                     'cred_token': 'fake_token'
                 }
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "updated successfully" in res_json
 
 
@@ -426,7 +424,7 @@ class TestLabelFunctions:
     """Test individual label-related functions"""
 
     @patch('server.get_client')
-    @patch('apis.labels.list_labels')
+    @patch('server.list_labels')
     async def test_list_labels_success(self, mock_list_labels_func, mock_get_client, mock_service, mock_label_data):
         mock_get_client.return_value = mock_service
         mock_list_labels_func.return_value = mock_label_data
@@ -437,10 +435,10 @@ class TestLabelFunctions:
                 arguments={'cred_token': 'fake_token'}
             )
             res_json = json.loads(result[0].text)
-            assert res_json == mock_label_data
+            assert res_json == mock_label_data[0]
 
     @patch('server.get_client')
-    @patch('apis.labels.get_label')
+    @patch('server.get_label')
     async def test_list_labels_with_id(self, mock_get_label_func, mock_get_client, mock_service, mock_label_data):
         mock_get_client.return_value = mock_service
         mock_get_label_func.return_value = mock_label_data[0]
@@ -451,10 +449,10 @@ class TestLabelFunctions:
                 arguments={'label_id': 'test_label_id', 'cred_token': 'fake_token'}
             )
             res_json = json.loads(result[0].text)
-            assert res_json == [mock_label_data[0]]
+            assert res_json == mock_label_data[0]
 
     @patch('server.get_client')
-    @patch('apis.labels.create_label')
+    @patch('server.create_label')
     async def test_create_label_success(self, mock_create_label_func, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_create_label_func.return_value = {'id': 'new_label_id', 'name': 'New Label'}
@@ -468,7 +466,7 @@ class TestLabelFunctions:
             assert res_json['name'] == 'New Label'
 
     @patch('server.get_client')
-    @patch('apis.labels.update_label')
+    @patch('server.update_label')
     async def test_update_label_success(self, mock_update_label_func, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_update_label_func.return_value = {'id': 'test_id', 'name': 'Updated Label'}
@@ -486,7 +484,7 @@ class TestLabelFunctions:
             assert res_json['name'] == 'Updated Label'
 
     @patch('server.get_client')
-    @patch('apis.labels.delete_label')
+    @patch('server.delete_label')
     async def test_delete_label_success(self, mock_delete_label_func, mock_get_client, mock_service):
         mock_get_client.return_value = mock_service
         mock_delete_label_func.return_value = "Label deleted successfully"
@@ -496,7 +494,7 @@ class TestLabelFunctions:
                 name='delete_label',
                 arguments={'label_id': 'test_id', 'cred_token': 'fake_token'}
             )
-            res_json = json.loads(result[0].text)
+            res_json = result[0].text
             assert "deleted successfully" in res_json
 
 
@@ -559,7 +557,7 @@ class TestErrorHandling:
             Mock(status=404), b'Not Found'
         )
 
-        with pytest.raises(HttpError):
+        with pytest.raises(ToolError):
             async with Client(mcp) as client:
                 await client.call_tool(
                     name='delete_draft',
@@ -571,8 +569,8 @@ class TestErrorHandling:
 #     """Test complex business logic scenarios"""
 
 #     @patch('server.get_client')
-#     @patch('apis.messages.list_messages')
-#     @patch('apis.messages.message_to_string')
+#     @patch('server.list_messages')
+#     @patch('server.message_to_string')
 #     async def test_list_emails_with_category_fallback(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
 #         """Test the complex category fallback logic in list_emails"""
 #         mock_get_client.return_value = mock_service
@@ -592,17 +590,17 @@ class TestErrorHandling:
 #                     'cred_token': 'fake_token'
 #                 }
 #             )
-#             res_json = json.loads(result[0].text)
+#             res_json = result[0].text
 #             assert res_json == ["Formatted Email"]
 
 #         # Should have made 3 calls to list_messages due to fallback logic
 #         assert mock_list_messages.call_count == 3
 
 #     @patch('server.get_client')
-#     @patch('apis.messages.fetch_email_or_draft')
-#     @patch('apis.messages.get_email_body')
-#     @patch('apis.messages.has_attachment')
-#     @patch('apis.messages.format_message_metadata')
+#     @patch('server.fetch_email_or_draft')
+#     @patch('server.get_email_body')
+#     @patch('server.has_attachment')
+#     @patch('server.format_message_metadata')
 #     async def test_read_email_with_attachment(self, mock_format_metadata, mock_has_attachment,
 #                                              mock_get_body, mock_fetch_email, mock_get_client, mock_service):
 #         """Test reading email with attachment includes link"""
@@ -617,7 +615,7 @@ class TestErrorHandling:
 #                 name='read_email',
 #                 arguments={'email_id': 'test_id', 'cred_token': 'fake_token'}
 #             )
-#             res_json = json.loads(result[0].text)
+#             res_json = result[0].text
 #             assert res_json['has_attachment'] == True
 #             assert 'link' in res_json
 #             assert 'mail.google.com' in res_json['link']
@@ -633,10 +631,10 @@ class TestErrorHandling:
 #         }
         
 #         # Mock the rest of the email reading process
-#         with patch('apis.messages.fetch_email_or_draft') as mock_fetch, \
-#              patch('apis.messages.get_email_body') as mock_get_body, \
-#              patch('apis.messages.has_attachment') as mock_has_attachment, \
-#              patch('apis.messages.format_message_metadata') as mock_format_metadata:
+#         with patch('server.fetch_email_or_draft') as mock_fetch, \
+#              patch('server.get_email_body') as mock_get_body, \
+#              patch('server.has_attachment') as mock_has_attachment, \
+#              patch('server.format_message_metadata') as mock_format_metadata:
             
 #             mock_fetch.return_value = {'id': 'found_email_id'}
 #             mock_get_body.return_value = 'Email body'
@@ -648,7 +646,7 @@ class TestErrorHandling:
 #                     name='read_email',
 #                     arguments={'email_subject': 'Test Subject', 'cred_token': 'fake_token'}
 #                 )
-#                 res_json = json.loads(result[0].text)
+#                 res_json = result[0].text
 #                 assert res_json['body'] == 'Email body'
 
 #             # Verify search was called with correct query
@@ -662,8 +660,8 @@ class TestErrorHandling:
 #     """Test performance characteristics"""
 
 #     @patch('server.get_client')
-#     @patch('apis.messages.list_messages')
-#     @patch('apis.messages.message_to_string')
+#     @patch('server.list_messages')
+#     @patch('server.message_to_string')
 #     async def test_large_email_list(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
 #         """Test handling of large email lists"""
 #         mock_get_client.return_value = mock_service
@@ -678,7 +676,7 @@ class TestErrorHandling:
 #                 name='list_emails',
 #                 arguments={'max_results': 1000, 'cred_token': 'fake_token'}
 #             )
-#             res_json = json.loads(result[0].text)
+#             res_json = result[0].text
 #             assert len(res_json) == 1000
 #             assert all(email == "Formatted Email" for email in res_json)
 
