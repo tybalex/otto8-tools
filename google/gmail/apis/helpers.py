@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timezone
+from typing import Union
 from zoneinfo import ZoneInfo
 
 from google.oauth2.credentials import Credentials
@@ -60,13 +61,17 @@ def setup_logger(name):
 logger = setup_logger(__name__)
 
 
-def parse_label_ids(label_ids_input: str) -> list[str]:
-    if not label_ids_input.strip():
-        return []
+def parse_label_ids(label_ids_input: Union[str, list[str]]) -> list[str]:
+    if isinstance(label_ids_input, str):
+        if not label_ids_input.strip():
+            return []
+        label_ids_list = label_ids_input.split(",")
+    else:
+        label_ids_list = label_ids_input
 
     return [
         label.upper() if label.upper() in GMAIL_BUILTIN_LABELS else label
-        for label in (l.strip() for l in label_ids_input.split(","))
+        for label in (l.strip() for l in label_ids_list)
         if label
     ]
 

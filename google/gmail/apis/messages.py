@@ -31,8 +31,8 @@ CATEGORY_IDS = {
 def modify_message_labels(
     service,
     message_id,
-    add_labels=None,
-    remove_labels=None,
+    add_labels: list[str] = None,
+    remove_labels: list[str] = None,
     apply_action_to_thread: bool = False,
     archive: Optional[
         bool
@@ -181,7 +181,6 @@ async def create_message(
     reply_to_email_id=None,
     reply_all=False,
 ):
-    gptscript_client = gptscript.GPTScript()
     message = MIMEMultipart()
     message_text_html = message_text.replace("\n", "<br>")
     message.attach(MIMEText(message_text_html, "html"))
@@ -222,30 +221,31 @@ async def create_message(
         message["bcc"] = bcc
 
     # Read and attach any workspace files if provided
-    for filepath in attachments:
-        try:
-            # Get the file bytes from the workspace
-            wksp_file_path = await prepend_base_path("files", filepath)
-            file_content = await gptscript_client.read_file_in_workspace(wksp_file_path)
+    # TODO: Commented out for now, will get this back in once we have a workspace solution
+    # for filepath in attachments:
+    #     try:
+    #         # Get the file bytes from the workspace
+    #         wksp_file_path = await prepend_base_path("files", filepath)
+    #         file_content = await gptscript_client.read_file_in_workspace(wksp_file_path)
 
-            # Determine the MIME type and subtype
-            mime = guess_mime(file_content) or "application/octet-stream"
-            main_type, sub_type = mime.split("/", 1)
+    #         # Determine the MIME type and subtype
+    #         mime = guess_mime(file_content) or "application/octet-stream"
+    #         main_type, sub_type = mime.split("/", 1)
 
-            # Create the appropriate MIMEBase object for the attachment
-            mime_base = MIMEBase(main_type, sub_type)
-            mime_base.set_payload(file_content)
-            encoders.encode_base64(mime_base)
+    #         # Create the appropriate MIMEBase object for the attachment
+    #         mime_base = MIMEBase(main_type, sub_type)
+    #         mime_base.set_payload(file_content)
+    #         encoders.encode_base64(mime_base)
 
-            # Add header with the file name
-            mime_base.add_header(
-                "Content-Disposition",
-                f'attachment; filename="{filepath.split("/")[-1]}"',
-            )
-            message.attach(mime_base)
-        except Exception as e:
-            # Raise a new exception with the problematic file path included
-            raise Exception(f"Error attaching {filepath}: {e}")
+    #         # Add header with the file name
+    #         mime_base.add_header(
+    #             "Content-Disposition",
+    #             f'attachment; filename="{filepath.split("/")[-1]}"',
+    #         )
+    #         message.attach(mime_base)
+    #     except Exception as e:
+    #         # Raise a new exception with the problematic file path included
+    #         raise Exception(f"Error attaching {filepath}: {e}")
 
     # Encode the message as a base64 string
     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")

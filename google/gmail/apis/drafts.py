@@ -1,6 +1,4 @@
-import gptscript
 from googleapiclient.errors import HttpError
-from gptscript.datasets import DatasetElement
 
 from apis.helpers import extract_message_headers
 from apis.messages import create_message
@@ -35,30 +33,10 @@ async def list_drafts(service, max_results=None):
             if not next_page_token:
                 break
 
-        try:
-            gptscript_client = gptscript.GPTScript()
-
-            elements = []
-            if len(all_drafts) == 0:
-                print("No drafts found")
-                return
-
-            for draft in all_drafts:
-                draft_id, draft_str = draft_to_string(service, draft)
-                elements.append(
-                    DatasetElement(name=draft_id, description="", contents=draft_str)
-                )
-
-            dataset_id = await gptscript_client.add_dataset_elements(
-                elements, name=f"gmail_drafts", description=f"list of drafts in Gmail"
-            )
-
-            print(f"Created dataset with ID {dataset_id} with {len(elements)} drafts")
-        except Exception as e:
-            print("An error occurred while creating the dataset:", e)
+        return all_drafts
 
     except HttpError as err:
-        print(f"An error occurred: {err}")
+        raise HttpError(f"An error occurred: {err}")
 
 
 def draft_to_string(service, draft, user_tz: str = "UTC"):
