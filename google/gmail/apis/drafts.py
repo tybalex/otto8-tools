@@ -61,11 +61,11 @@ async def list_drafts(service, max_results=None):
         print(f"An error occurred: {err}")
 
 
-def draft_to_string(service, draft):
+def draft_to_string(service, draft, user_tz: str = "UTC"):
     draft_id = draft["id"]
     draft_msg = service.users().drafts().get(userId="me", id=draft_id).execute()
     msg = draft_msg["message"]
-    subject, sender, to, cc, bcc, date, _ = extract_message_headers(msg)
+    subject, sender, to, cc, bcc, date, _ = extract_message_headers(msg, user_tz)
     return (
         draft_id,
         f"Draft ID: {draft_id}, From: {sender}, Subject: {subject}, To: {to}, CC: {cc}, Bcc: {bcc}, Saved: {date}",

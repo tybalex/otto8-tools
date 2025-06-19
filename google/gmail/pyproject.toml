@@ -1,0 +1,19 @@
+[project]
+name = "gmail"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bs4>=0.0.2",
+    "fastmcp>=2.8.1",
+    "filetype>=1.2.0",
+    "google-api-python-client>=2.172.0",
+    "pytz>=2025.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]

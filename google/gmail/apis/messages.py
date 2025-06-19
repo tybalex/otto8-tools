@@ -6,11 +6,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
 
-import gptscript
 from bs4 import BeautifulSoup
 from filetype import guess_mime
 from googleapiclient.errors import HttpError
-from gptscript.datasets import DatasetElement
 
 from apis.helpers import (
     format_query_timestamp,
@@ -301,7 +299,7 @@ def list_messages(
             if not next_page_token:
                 break
     except HttpError as err:
-        raise Exception(f"Error listing messages: {err}")
+        raise HttpError(f"Error listing messages: {err}")
     except Exception as e:
         logger.error(f"Error listing messages: {e}")
         raise Exception(f"Error listing messages: {e}")
@@ -309,32 +307,7 @@ def list_messages(
     return all_messages
 
 
-async def create_gptscript_dataset(service, all_messages, query, labels) -> str:
-    try:
-        gptscript_client = gptscript.GPTScript()
-
-        elements = []
-        if len(all_messages) == 0:
-            return ""
-
-        for message in all_messages:
-            msg_id, msg_str = message_to_string(service, message)
-            elements.append(
-                DatasetElement(name=msg_id, description="", contents=msg_str)
-            )
-
-        dataset_id = await gptscript_client.add_dataset_elements(
-            elements,
-            name=f"gmail_{query}",
-            description=f"list of emails in Gmail for query: [{query}], labels: [{labels}]",
-        )
-
-        return f"Created dataset with ID {dataset_id} with {len(elements)} emails"
-    except Exception as e:
-        raise Exception(f"An error occurred while creating the dataset: {e}")
-
-
-def message_to_string(service, message) -> tuple[str, str]:
+def message_to_string(service, message, user_tz: str) -> tuple[str, str]:
     msg = (
         service.users()
         .messages()
@@ -346,12 +319,12 @@ def message_to_string(service, message) -> tuple[str, str]:
         )
         .execute()
     )
-    return format_message_metadata(msg)
+    return format_message_metadata(msg, user_tz)
 
 
-def format_message_metadata(msg) -> tuple[str, str]:
+def format_message_metadata(msg, user_tz: str) -> tuple[str, str]:
     msg_id = msg["id"]
-    subject, sender, to, cc, bcc, date, label_ids = extract_message_headers(msg)
+    subject, sender, to, cc, bcc, date, label_ids = extract_message_headers(msg, user_tz)
     read_status = "Read" if "UNREAD" not in label_ids else "Unread"
     category = []
     label_ids_set = set(label_ids)
