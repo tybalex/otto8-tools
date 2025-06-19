@@ -565,120 +565,120 @@ class TestErrorHandling:
                 )
 
 
-# class TestComplexScenarios:
-#     """Test complex business logic scenarios"""
+class TestComplexScenarios:
+    """Test complex business logic scenarios"""
 
-#     @patch('server.get_client')
-#     @patch('server.list_messages')
-#     @patch('server.message_to_string')
-#     async def test_list_emails_with_category_fallback(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
-#         """Test the complex category fallback logic in list_emails"""
-#         mock_get_client.return_value = mock_service
+    @patch('server.get_client')
+    @patch('server.list_messages')
+    @patch('server.message_to_string')
+    async def test_list_emails_with_category_fallback(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
+        """Test the complex category fallback logic in list_emails"""
+        mock_get_client.return_value = mock_service
         
-#         # First call returns empty (no primary category emails)
-#         # Second call returns empty (estimate check)
-#         # Third call returns emails (fallback without category)
-#         mock_list_messages.side_effect = [[], [], [{'id': 'email1'}]]
-#         mock_message_to_string.return_value = (None, "Formatted Email")
+        # First call returns empty (no primary category emails)
+        # Second call returns empty (estimate check)
+        # Third call returns emails (fallback without category)
+        mock_list_messages.side_effect = [[], [], [{'id': 'email1'}]]
+        mock_message_to_string.return_value = (None, "Formatted Email")
 
-#         async with Client(mcp) as client:
-#             result = await client.call_tool(
-#                 name='list_emails',
-#                 arguments={
-#                     'category': 'primary',
-#                     'label_ids': 'INBOX',
-#                     'cred_token': 'fake_token'
-#                 }
-#             )
-#             res_json = result[0].text
-#             assert res_json == ["Formatted Email"]
+        async with Client(mcp) as client:
+            result = await client.call_tool(
+                name='list_emails',
+                arguments={
+                    'category': 'primary',
+                    'label_ids': 'INBOX',
+                    'cred_token': 'fake_token'
+                }
+            )
+            res_json = result[0].text
+            assert res_json == "Formatted Email"
 
-#         # Should have made 3 calls to list_messages due to fallback logic
-#         assert mock_list_messages.call_count == 3
+        # Should have made 3 calls to list_messages due to fallback logic
+        assert mock_list_messages.call_count == 3
 
-#     @patch('server.get_client')
-#     @patch('server.fetch_email_or_draft')
-#     @patch('server.get_email_body')
-#     @patch('server.has_attachment')
-#     @patch('server.format_message_metadata')
-#     async def test_read_email_with_attachment(self, mock_format_metadata, mock_has_attachment,
-#                                              mock_get_body, mock_fetch_email, mock_get_client, mock_service):
-#         """Test reading email with attachment includes link"""
-#         mock_get_client.return_value = mock_service
-#         mock_fetch_email.return_value = {'id': 'test_id'}
-#         mock_get_body.return_value = 'Test email body'
-#         mock_has_attachment.return_value = True  # Email has attachment
-#         mock_format_metadata.return_value = (None, 'Test metadata')
+    @patch('server.get_client')
+    @patch('server.fetch_email_or_draft')
+    @patch('server.get_email_body')
+    @patch('server.has_attachment')
+    @patch('server.format_message_metadata')
+    async def test_read_email_with_attachment(self, mock_format_metadata, mock_has_attachment,
+                                             mock_get_body, mock_fetch_email, mock_get_client, mock_service):
+        """Test reading email with attachment includes link"""
+        mock_get_client.return_value = mock_service
+        mock_fetch_email.return_value = {'id': 'test_id'}
+        mock_get_body.return_value = 'Test email body'
+        mock_has_attachment.return_value = True  # Email has attachment
+        mock_format_metadata.return_value = (None, 'Test metadata')
 
-#         async with Client(mcp) as client:
-#             result = await client.call_tool(
-#                 name='read_email',
-#                 arguments={'email_id': 'test_id', 'cred_token': 'fake_token'}
-#             )
-#             res_json = result[0].text
-#             assert res_json['has_attachment'] == True
-#             assert 'link' in res_json
-#             assert 'mail.google.com' in res_json['link']
+        async with Client(mcp) as client:
+            result = await client.call_tool(
+                name='read_email',
+                arguments={'email_id': 'test_id', 'cred_token': 'fake_token'}
+            )
+            res_json = json.loads(result[0].text)
+            assert res_json['has_attachment'] == True
+            assert 'link' in res_json
+            assert 'mail.google.com' in res_json['link']
 
-#     @patch('server.get_client')
-#     async def test_read_email_by_subject(self, mock_get_client, mock_service):
-#         """Test reading email by subject instead of ID"""
-#         mock_get_client.return_value = mock_service
+    @patch('server.get_client')
+    async def test_read_email_by_subject(self, mock_get_client, mock_service):
+        """Test reading email by subject instead of ID"""
+        mock_get_client.return_value = mock_service
         
-#         # Mock the search response
-#         mock_service.users().messages().list().execute.return_value = {
-#             'messages': [{'id': 'found_email_id'}]
-#         }
+        # Mock the search response
+        mock_service.users().messages().list().execute.return_value = {
+            'messages': [{'id': 'found_email_id'}]
+        }
         
-#         # Mock the rest of the email reading process
-#         with patch('server.fetch_email_or_draft') as mock_fetch, \
-#              patch('server.get_email_body') as mock_get_body, \
-#              patch('server.has_attachment') as mock_has_attachment, \
-#              patch('server.format_message_metadata') as mock_format_metadata:
+        # Mock the rest of the email reading process
+        with patch('server.fetch_email_or_draft') as mock_fetch, \
+             patch('server.get_email_body') as mock_get_body, \
+             patch('server.has_attachment') as mock_has_attachment, \
+             patch('server.format_message_metadata') as mock_format_metadata:
             
-#             mock_fetch.return_value = {'id': 'found_email_id'}
-#             mock_get_body.return_value = 'Email body'
-#             mock_has_attachment.return_value = False
-#             mock_format_metadata.return_value = (None, 'Metadata')
+            mock_fetch.return_value = {'id': 'found_email_id'}
+            mock_get_body.return_value = 'Email body'
+            mock_has_attachment.return_value = False
+            mock_format_metadata.return_value = (None, 'Metadata')
 
-#             async with Client(mcp) as client:
-#                 result = await client.call_tool(
-#                     name='read_email',
-#                     arguments={'email_subject': 'Test Subject', 'cred_token': 'fake_token'}
-#                 )
-#                 res_json = result[0].text
-#                 assert res_json['body'] == 'Email body'
+            async with Client(mcp) as client:
+                result = await client.call_tool(
+                    name='read_email',
+                    arguments={'email_subject': 'Test Subject', 'cred_token': 'fake_token'}
+                )
+                res_json = json.loads(result[0].text)
+                assert res_json['body'] == 'Email body'
 
-#             # Verify search was called with correct query
-#             mock_service.users().messages().list.assert_called_with(
-#                 userId="me", q='subject:"Test Subject"'
-#             )
+            # Verify search was called with correct query
+            mock_service.users().messages().list.assert_called_with(
+                userId="me", q='subject:"Test Subject"'
+            )
 
 
-# # Performance and Load Testing (optional)
-# class TestPerformance:
-#     """Test performance characteristics"""
+# Performance and Load Testing (optional)
+class TestPerformance:
+    """Test performance characteristics"""
 
-#     @patch('server.get_client')
-#     @patch('server.list_messages')
-#     @patch('server.message_to_string')
-#     async def test_large_email_list(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
-#         """Test handling of large email lists"""
-#         mock_get_client.return_value = mock_service
+    @patch('server.get_client')
+    @patch('server.list_messages')
+    @patch('server.message_to_string')
+    async def test_large_email_list(self, mock_message_to_string, mock_list_messages, mock_get_client, mock_service):
+        """Test handling of large email lists"""
+        mock_get_client.return_value = mock_service
         
-#         # Create a large list of mock emails
-#         large_email_list = [{'id': f'email_{i}'} for i in range(1000)]
-#         mock_list_messages.return_value = large_email_list
-#         mock_message_to_string.return_value = (None, "Formatted Email")
+        # Create a large list of mock emails
+        large_email_list = [{'id': f'email_{i}'} for i in range(1000)]
+        mock_list_messages.return_value = large_email_list
+        mock_message_to_string.return_value = (None, "Formatted Email")
 
-#         async with Client(mcp) as client:
-#             result = await client.call_tool(
-#                 name='list_emails',
-#                 arguments={'max_results': 1000, 'cred_token': 'fake_token'}
-#             )
-#             res_json = result[0].text
-#             assert len(res_json) == 1000
-#             assert all(email == "Formatted Email" for email in res_json)
+        async with Client(mcp) as client:
+            result = await client.call_tool(
+                name='list_emails',
+                arguments={'max_results': 1000, 'cred_token': 'fake_token'}
+            )
+            res_json = json.loads(result[0].text)
+            assert len(res_json) == 1000
+            assert all(email == "Formatted Email" for email in res_json)
 
 
 if __name__ == '__main__':
