@@ -170,7 +170,7 @@ def get_thread_with_message_id(service, message_id: str):
         raise ValueError(f"No thread found for message {message_id}")
 
 
-async def create_message(
+async def create_message_data(
     service,
     to,
     cc,

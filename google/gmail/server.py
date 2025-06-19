@@ -2,11 +2,11 @@ from fastmcp import FastMCP
 from pydantic import Field
 from typing import Annotated, Literal, Union
 import os
-from apis.helpers import get_client, parse_label_ids, NON_PRIMARY_CATEGORIES_MAP, str_to_bool
-from apis.messages import list_messages, message_to_string, modify_message_labels
+from apis.helpers import get_client, parse_label_ids, NON_PRIMARY_CATEGORIES_MAP
+from apis.messages import list_messages, message_to_string, modify_message_labels, create_message_data, fetch_email_or_draft, get_email_body, has_attachment, format_message_metadata
 from googleapiclient.errors import HttpError
 from fastmcp.exceptions import ToolError
-from apis.drafts import list_drafts
+from apis.drafts import list_drafts, update_draft as update_draft_func
 from apis.labels import list_labels, get_label, create_label, update_label, delete_label
 
 # Configure server-specific settings
@@ -109,6 +109,10 @@ async def list_drafts(
     return drafts
 
 @mcp.tool(
+        annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+    },
     exclude_args=["cred_token"],
 )
 def list_labels(
@@ -206,6 +210,264 @@ def modify_message_labels(
         mark_as_important,
     )
     return res
+
+@mcp.tool(
+    annotations={"readOnlyHint": True, "destructiveHint": False},
+    exclude_args=["cred_token"],
+)
+async def get_current_email_address(
+    cred_token: str = None
+) -> str:
+    """
+    Gets the email address of the currently signed in user.
+    """
+    service = get_client(cred_token)
+    try:
+        profile = service.users().getProfile(userId="me").execute()
+        return profile["emailAddress"]
+    except Exception as e:
+        raise ToolError(f"Error getting email address: {e}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+async def create_draft(
+    to_emails: Annotated[str, Field(description="Comma-separated list of email addresses to send the email to.")],
+    subject: Annotated[str, Field(description="Subject of the email.")],
+    message: Annotated[str, Field(description="Message body of the email.")],
+    cc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to cc the email to (Optional)")] = None,
+    bcc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to bcc the email to (Optional)")] = None,
+    reply_to_email_id: Annotated[str, Field(description="The ID of the email to reply to (Optional)")] = None,
+    reply_all: Annotated[bool, Field(description="Whether to reply to all (Optional: Default is false)")] = False,
+    # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
+    cred_token: str = None
+) -> str:
+    """
+    Create a draft email in the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    # att_list = [a.strip() for a in attachments if a.strip()]
+    try:
+        draft_obj = await create_message_data(
+            service=service,
+            to=to_emails,
+            cc=cc_emails,
+            bcc=bcc_emails,
+            subject=subject,
+            message_text=message,
+            # attachments=att_list,
+            attachments=[],
+            reply_to_email_id=reply_to_email_id,
+            reply_all=reply_all,
+        )
+        return f"Draft Id: {draft_obj['id']} - Draft created successfully!"
+    except Exception as e:
+        raise ToolError(f"Error creating draft: {e}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+def delete_draft(
+    draft_id: Annotated[str, Field(description="The ID of the draft to delete.")],
+    cred_token: str = None
+) -> str:
+    """
+    Delete a draft email in the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    try:
+        service.users().drafts().delete(userId="me", id=draft_id).execute()
+        return f"Draft Id: {draft_id} deleted successfully!"
+    except HttpError as err:
+        raise HttpError(f"Error deleting draft, HttpError: {err}")
+    except Exception as err:
+        raise Exception(f"Unexpected error deleting draft, Exception: {err}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+def delete_email(
+    email_id: Annotated[str, Field(description="The ID of the email to delete.")],
+    cred_token: str = None
+) -> str:
+    """
+    Delete an email in the user's Gmail account (moves to trash).
+    """
+    service = get_client(cred_token)
+    try:
+        service.users().messages().trash(userId="me", id=email_id).execute()
+        return f"Email Id: {email_id} deleted successfully!"
+    except HttpError as err:
+        raise HttpError(f"Error deleting email, HttpError: {err}")
+    except Exception as err:
+        raise Exception(f"Unexpected error deleting email, Exception: {err}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+def read_email(
+    email_id: Annotated[str, Field(description="Email or Draft ID to read (Optional: If not provided, email_subject is required)")] = None,
+    email_subject: Annotated[str, Field(description="Email subject to read (Optional: If not provided, email_id is required)")] = None,
+    user_timezone: str = "UTC",
+    cred_token: str = None
+) -> dict:
+    """
+    Read an email or draft from the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    if not email_id and not email_subject:
+        raise ToolError("Either email_id or email_subject must be set")
+    try:
+        if email_subject:
+            query = f'subject:"{email_subject}"'
+            response = service.users().messages().list(userId="me", q=query).execute()
+            if not response or not response.get("messages"):
+                raise ToolError(f"No emails found with subject: {email_subject}")
+            email_id = response["messages"][0]["id"]
+        msg = fetch_email_or_draft(service, email_id)
+        body = get_email_body(msg)
+        attachment = has_attachment(msg)
+        _, metadata_str = format_message_metadata(msg, user_timezone)
+        result = {
+            "metadata": metadata_str,
+            "body": body,
+            "has_attachment": bool(attachment),
+        }
+        if attachment:
+            result["link"] = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
+        return result
+    except HttpError as err:
+        raise HttpError(f"Error sending draft, HttpError: {err}")
+    except Exception as err:
+        raise Exception(f"Unexpected error sending draft, Exception: {err}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+def send_draft(
+    draft_id: Annotated[str, Field(description="The ID of the draft email to send.")],
+    cred_token: str = None
+) -> str:
+    """
+    Send a draft email in the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    try:
+        sent_message = service.users().drafts().send(userId="me", body={"id": draft_id}).execute()
+        return f"Draft Id: {draft_id} sent successfully! Message Id: {sent_message['id']}"
+    except HttpError as err:
+        raise HttpError(f"Error sending email, HttpError: {err}")
+    except Exception as err:
+        raise Exception(f"Unexpected error sending email, Exception: {err}")
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+async def send_email(
+    to_emails: Annotated[str, Field(description="Comma-separated list of email addresses to send the email to.")],
+    subject: Annotated[str, Field(description="Subject of the email.")],
+    message: Annotated[str, Field(description="Message body of the email.")],
+    cc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to cc the email to (Optional)")] = None,
+    bcc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to bcc the email to (Optional)")] = None,
+    # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
+    cred_token: str = None
+) -> str:
+    """
+    Send an email from the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    # att_list = [a.strip() for a in attachments if a.strip()] if attachments else []
+    try:
+        message_obj = await create_message_data(
+            service=service,
+            to=to_emails,
+            cc=cc_emails,
+            bcc=bcc_emails,
+            subject=subject,
+            message_text=message,
+            # attachments=att_list,
+            attachments=[],
+        )
+        sent_message = service.users().messages().send(userId="me", body=message_obj).execute()
+        return f"Message Id: {sent_message['id']} - Message sent successfully!"
+    except HttpError as err:
+        raise ToolError(str(err))
+    except Exception as err:
+        raise ToolError(str(err))
+
+@mcp.tool(
+    exclude_args=["cred_token"],
+)
+async def update_draft(
+    draft_id: Annotated[str, Field(description="The ID of the draft email to update.")],
+    to_emails: Annotated[str, Field(description="Comma-separated list of email addresses to send the email to.")],
+    subject: Annotated[str, Field(description="Subject of the email.")],
+    message: Annotated[str, Field(description="Message body of the email.")],
+    cc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to cc the email to (Optional)")] = None,
+    bcc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to bcc the email to (Optional)")] = None,
+    reply_to_email_id: Annotated[str, Field(description="The ID of the email to reply to (Optional)")] = None,
+    reply_all: Annotated[bool, Field(description="Whether to reply to all (Optional: Default is false)")] = False,
+    # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
+    cred_token: str = None
+) -> str:
+    """
+    Update a draft email in the user's Gmail account.
+    """
+    service = get_client(cred_token)
+    # att_list = [a.strip() for a in attachments if a.strip()] if attachments else []
+    try:
+        await update_draft_func(
+            service=service,
+            draft_id=draft_id,
+            to=to_emails,
+            cc=cc_emails,
+            bcc=bcc_emails,
+            subject=subject,
+            body=message,
+            # attachments=att_list,
+            attachments=[],
+            reply_to_email_id=reply_to_email_id,
+            reply_all=reply_all,
+        )
+        return f"Draft Id: {draft_id} updated successfully!"
+    except HttpError as err:
+        raise HttpError(f"Error updating draft, HttpError: {err}")
+    except Exception as err:
+        raise Exception(f"Unexpected error updating draft, Exception: {err}")
+
+@mcp.tool(
+    annotations={"readOnlyHint": True, "destructiveHint": False},
+    exclude_args=["cred_token"],
+)
+def list_attachments(
+    email_id: Annotated[str, Field(description="The ID of the email to list attachments from.")],
+    cred_token: str = None
+) -> list:
+    """
+    List attachments in an email from a user's Gmail account.
+    """
+    service = get_client(cred_token)
+    try:
+        msg = fetch_email_or_draft(service, email_id)
+        if "payload" not in msg:
+            return []
+        attachments = []
+        if "parts" in msg["payload"]:
+            for part in msg["payload"]["parts"]:
+                if part.get("filename") and part.get("body", {}).get("attachmentId"):
+                    attachments.append({
+                        "id": part["body"]["attachmentId"],
+                        "filename": part["filename"]
+                    })
+        return attachments
+    except HttpError as error:
+        raise HttpError(f"Error listing attachments, HttpError: {error}")
+    except Exception as error:
+        raise Exception(f"Unexpected error listing attachments, Exception: {error}")
+
+# TODO: tools missing:
+# - read_attachment: need supports of something like a gptscript knowledge tool
+# - download_attachment: need to support downloading attachments to the workspace
 
 if __name__ == "__main__":
     mcp.run(

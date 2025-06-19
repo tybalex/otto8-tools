@@ -1,7 +1,7 @@
 from googleapiclient.errors import HttpError
 
 from apis.helpers import extract_message_headers
-from apis.messages import create_message
+from apis.messages import create_message_data
 
 
 async def list_drafts(service, max_results=None):
@@ -57,7 +57,7 @@ def display_list_drafts(service, drafts: list):
         print(draft_str)
 
 
-async def update_draft(
+def update_draft(
     service,
     draft_id,
     to,
@@ -70,7 +70,7 @@ async def update_draft(
     reply_all=False,
 ):
     try:
-        message = await create_message(
+        message = create_message_data(
             service=service,
             to=to,
             cc=cc,
