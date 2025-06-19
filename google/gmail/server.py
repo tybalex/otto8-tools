@@ -36,6 +36,7 @@ async def list_emails(
     List emails in the user's gmail account.
     If query is empty, list emails in the user's inbox.
     Otherwise, list emails matching the given query from all labels.
+    Supports filtering by labels, category, and query.
     """
 
     if "after:" in query or "before:" in query:
@@ -193,7 +194,7 @@ def modify_message_labels(
     cred_token: str = None
 ) -> dict:
     """
-    Modify labels for a specific email.
+    Modify labels on a Gmail email or on all messages within the same thread. Supports marking an email or the entire thread as read or unread, archiving or unarchiving, starring or unstarring, marking as important or not important, and adding or removing custom labels.
     """
     service = get_client(cred_token)
     add_labels = parse_label_ids(add_label_ids) if add_label_ids else None
@@ -374,6 +375,7 @@ async def send_email(
 ) -> str:
     """
     Send an email from the user's Gmail account.
+    Do not attempt to forward or reply to emails using this tool.
     """
     service = get_client(cred_token)
     # att_list = [a.strip() for a in attachments if a.strip()] if attachments else []
