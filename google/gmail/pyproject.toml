@@ -13,8 +13,8 @@ dependencies = [
 ]
 
 [project.scripts]
-obot-gmail-mcp = "server:main"
-gmail-mcp-server = "server:main"
+obot-gmail-mcp = "server:streamable_http_server"
+obot-gmail-mcp-stdio = "server:stdio_server"
 
 [dependency-groups]
 dev = [

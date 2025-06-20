@@ -10,6 +10,10 @@
 # Run directly from the current directory
 uvx --from . obot-gmail-mcp
 ```
+or stdio server:
+```bash
+uvx --from . obot-gmail-mcp-stdio
+```
 
 ### Using uv (development)
 ```bash

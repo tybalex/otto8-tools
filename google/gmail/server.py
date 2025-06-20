@@ -471,7 +471,7 @@ def list_attachments(
 # - read_attachment: need supports of something like a gptscript knowledge tool
 # - download_attachment: need to support downloading attachments to the workspace
 
-def main():
+def streamable_http_server():
     """Main entry point for the Gmail MCP server."""
     mcp.run(
         transport="streamable-http", # fixed to streamable-http
@@ -480,5 +480,10 @@ def main():
         path=MCP_PATH,
     )
 
+def stdio_server():
+    """Main entry point for the Gmail MCP server."""
+    mcp.run()
+
+
 if __name__ == "__main__":
-    main()
+    streamable_http_server()
