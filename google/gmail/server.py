@@ -12,6 +12,7 @@ from apis.labels import list_labels, get_label, create_label, update_label, dele
 # Configure server-specific settings
 PORT = os.getenv("PORT", 9000)
 MCP_PATH = os.getenv("MCP_PATH", "/mcp/gmail")
+GOOGLE_OAUTH_TOKEN = os.getenv("GOOGLE_OAUTH_TOKEN")
 
 mcp = FastMCP(
     name="GmailMCPServer",
@@ -31,7 +32,7 @@ async def list_emails(
     after: Annotated[str, Field(description="Date to search for emails after.")] = "",
     before: Annotated[str, Field(description="Date to search for emails before.")] = "",
     user_timezone: str = "UTC",
-    cred_token: str = None) -> Union[list[str], str]:
+    cred_token: str = GOOGLE_OAUTH_TOKEN) -> Union[list[str], str]:
     """
     List emails in the user's gmail account.
     If query is empty, list emails in the user's inbox.
@@ -100,7 +101,7 @@ async def list_emails(
 )
 def list_drafts(
     max_results: Annotated[int, Field(description="Maximum number of drafts to return.", ge=1, le=1000)] = 100,
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> list:
     """
     List drafts in the user's gmail account.
@@ -118,7 +119,7 @@ def list_drafts(
 )
 def list_labels(
     label_id: Annotated[str, Field(description="Label ID to fetch (optional)")] = None,
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> list[dict]:
     """
     Fetch a specific label by ID if provided, otherwise list all labels.
@@ -139,7 +140,7 @@ def create_label(
     label_name: Annotated[str, Field(description="Name of the label to create.")],
     label_list_visibility: Annotated[Literal["labelShow", "labelHide", "labelShowIfUnread"], Field(description="Label list visibility")] = "labelShow",
     message_list_visibility: Annotated[Literal["show", "hide"], Field(description="Message list visibility")] = "show",
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> dict:
     """
     Create a new label in the user's gmail account.
@@ -156,7 +157,7 @@ def update_label(
     label_name: Annotated[str, Field(description="New name for the label")] = None,
     label_list_visibility: Annotated[Literal["labelShow", "labelHide", "labelShowIfUnread"], Field(description="Label list visibility")] = None,
     message_list_visibility: Annotated[Literal["show", "hide"], Field(description="Message list visibility")] = None,
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> dict:
     """
     Update an existing label in the user's gmail account.
@@ -170,7 +171,7 @@ def update_label(
 )
 def delete_label(
     label_id: Annotated[str, Field(description="ID of the label to delete.")],
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Delete a label in the user's gmail account.
@@ -191,7 +192,7 @@ def modify_message_labels(
     mark_as_starred: Annotated[bool, Field(description="Whether to mark the message as starred")] = None,
     mark_as_important: Annotated[bool, Field(description="Whether to mark the message as important")] = None,
     apply_action_to_thread: Annotated[bool, Field(description="Whether to apply action to the whole thread")] = False,
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> dict:
     """
     Modify labels on a Gmail email or on all messages within the same thread. Supports marking an email or the entire thread as read or unread, archiving or unarchiving, starring or unstarring, marking as important or not important, and adding or removing custom labels.
@@ -217,7 +218,7 @@ def modify_message_labels(
     exclude_args=["cred_token"],
 )
 async def get_current_email_address(
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Gets the email address of the currently signed in user.
@@ -241,7 +242,7 @@ async def create_draft(
     reply_to_email_id: Annotated[str, Field(description="The ID of the email to reply to (Optional)")] = None,
     reply_all: Annotated[bool, Field(description="Whether to reply to all (Optional: Default is false)")] = False,
     # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Create a draft email in the user's Gmail account.
@@ -270,7 +271,7 @@ async def create_draft(
 )
 def delete_draft(
     draft_id: Annotated[str, Field(description="The ID of the draft to delete.")],
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Delete a draft email in the user's Gmail account.
@@ -289,7 +290,7 @@ def delete_draft(
 )
 def delete_email(
     email_id: Annotated[str, Field(description="The ID of the email to delete.")],
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Delete an email in the user's Gmail account (moves to trash).
@@ -310,7 +311,7 @@ def read_email(
     email_id: Annotated[str, Field(description="Email or Draft ID to read (Optional: If not provided, email_subject is required)")] = None,
     email_subject: Annotated[str, Field(description="Email subject to read (Optional: If not provided, email_id is required)")] = None,
     user_timezone: str = "UTC",
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> dict:
     """
     Read an email or draft from the user's Gmail account.
@@ -347,7 +348,7 @@ def read_email(
 )
 def send_draft(
     draft_id: Annotated[str, Field(description="The ID of the draft email to send.")],
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Send a draft email in the user's Gmail account.
@@ -371,7 +372,7 @@ async def send_email(
     cc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to cc the email to (Optional)")] = None,
     bcc_emails: Annotated[str, Field(description="Comma-separated list of email addresses to bcc the email to (Optional)")] = None,
     # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Send an email from the user's Gmail account.
@@ -410,7 +411,7 @@ async def update_draft(
     reply_to_email_id: Annotated[str, Field(description="The ID of the email to reply to (Optional)")] = None,
     reply_all: Annotated[bool, Field(description="Whether to reply to all (Optional: Default is false)")] = False,
     # attachments: Annotated[list[str], Field(description="List of workspace file paths to attach to the email (Optional)")] = None, # not supported yet till workspace is implemented
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> str:
     """
     Update a draft email in the user's Gmail account.
@@ -443,7 +444,7 @@ async def update_draft(
 )
 def list_attachments(
     email_id: Annotated[str, Field(description="The ID of the email to list attachments from.")],
-    cred_token: str = None
+    cred_token: str = GOOGLE_OAUTH_TOKEN
 ) -> list:
     """
     List attachments in an email from a user's Gmail account.
