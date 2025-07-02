@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import app.vector_db as db
 import app.db_schema as schemas
 
@@ -7,6 +8,7 @@ from pydantic import Field
 from typing import Annotated, Literal
 import os
 from fastmcp.exceptions import ToolError
+from uuid import uuid4
 
 # Import all the command functions
 from fastmcp.server.dependencies import get_http_headers
@@ -31,17 +33,13 @@ def _get_tenant_id() -> str:
 
 ## manage tenant tools
 @mcp.tool
-async def create_tenant(tenant: schemas.TenantCreate):
-    await db.create_tenant(tenant.tenant_id)
-    tenants = await db.list_tenants()
-    for t in tenants:
-        if t.tenant_id == tenant.tenant_id:
-            return schemas.TenantInfo(
-                tenant_id=t.tenant_id,
-                plan="free",
-                created_at=t.created_at
-            )
-    raise ToolError("500: Failed to create tenant")
+async def create_tenant() -> schemas.TenantInfo:
+    tenant_id = str(uuid4())
+    await db.create_tenant(tenant_id)
+    return schemas.TenantInfo(
+        tenant_id=tenant_id,
+        created_at=datetime.now()
+    )
 
 @mcp.tool
 async def list_tenants() -> list:

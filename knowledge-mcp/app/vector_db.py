@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import (
     Column, String, JSON, TIMESTAMP, text,
-    select, delete, insert
+    select, delete
 )
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from pgvector.sqlalchemy import Vector
@@ -28,7 +28,6 @@ EMBED_DIM = 1536
 class Tenant(Base):
     __tablename__ = "tenants"
     tenant_id = Column(String, primary_key=True)
-    plan = Column(String, nullable=False, default="free")
     created_at = Column(
         TIMESTAMP(timezone=True),
         server_default=text("now()"),
@@ -74,10 +73,10 @@ async def init_db():
         )
 
 # tenant CRUD
-async def create_tenant(tenant_id: str, plan: str = "free"):
+async def create_tenant(tenant_id: str):
     async with AsyncSessionLocal() as session:
-        stmt = insert(Tenant).values(tenant_id=tenant_id, plan=plan)
-        stmt = stmt.prefix_with("ON CONFLICT DO NOTHING")
+        stmt = pg_insert(Tenant).values(tenant_id=tenant_id)
+        stmt = stmt.on_conflict_do_nothing()
         await session.execute(stmt)
         await session.commit()
 
@@ -96,9 +95,9 @@ async def delete_tenant(tenant_id: str):
 # file CRUD
 async def create_file(tenant_id: str, file_id: str, metadata: dict):
     async with AsyncSessionLocal() as session:
-        stmt = insert(FileRecord).values(
+        stmt = pg_insert(FileRecord).values(
             tenant_id=tenant_id, file_id=file_id, file_metadata=metadata
-        ).prefix_with("ON CONFLICT DO NOTHING")
+        ).on_conflict_do_nothing()
         await session.execute(stmt)
         await session.commit()
 
@@ -113,12 +112,10 @@ async def list_files(tenant_id: str):
 async def delete_file(tenant_id: str, file_id: str):
     async with AsyncSessionLocal() as session:
         await session.execute(delete(ChunkEntry).where(
-            ChunkEntry.tenant_id == tenant_id,
-            ChunkEntry.file_id == file_id
+            (ChunkEntry.tenant_id == tenant_id) & (ChunkEntry.file_id == file_id)
         ))
         res = await session.execute(delete(FileRecord).where(
-            FileRecord.tenant_id == tenant_id,
-            FileRecord.file_id == file_id
+            (FileRecord.tenant_id == tenant_id) & (FileRecord.file_id == file_id)
         ))
         await session.commit()
         return res.rowcount > 0
@@ -150,9 +147,9 @@ async def upsert_chunks(tenant_id: str, file_id: str, chunks: list):
 async def delete_chunk(tenant_id: str, file_id: str, chunk_id: str):
     async with AsyncSessionLocal() as session:
         res = await session.execute(delete(ChunkEntry).where(
-            ChunkEntry.tenant_id == tenant_id,
-            ChunkEntry.file_id == file_id,
-            ChunkEntry.chunk_id == chunk_id
+            (ChunkEntry.tenant_id == tenant_id) & 
+            (ChunkEntry.file_id == file_id) & 
+            (ChunkEntry.chunk_id == chunk_id)
         ))
         await session.commit()
         return res.rowcount > 0

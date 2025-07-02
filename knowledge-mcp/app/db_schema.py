@@ -6,11 +6,9 @@ from datetime import datetime
 # Tenant schemas
 class TenantCreate(BaseModel):
     tenant_id: str
-    plan: str = "free"
 
 class TenantInfo(BaseModel):
     tenant_id: str
-    plan: str = "free"
     created_at: datetime
 
 # File-level metadata
