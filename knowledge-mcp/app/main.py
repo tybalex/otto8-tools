@@ -1,3 +1,4 @@
+import asyncio
 import app.vector_db as db
 import app.db_schema as schemas
 
@@ -27,10 +28,6 @@ def _get_tenant_id() -> str:
     if not tenant_id:
         raise ToolError("No tenant id found in headers")
     return tenant_id
-
-# @mcp.on_event("startup")
-# async def on_startup():
-#     await db.init_db()
 
 ## manage tenant tools
 @mcp.tool
@@ -104,15 +101,15 @@ async def query_chunks(
         ) for r in rows
     ]
 
-def streamable_http_server():
+async def streamable_http_server():
     """Main entry point for the MCP server."""
-    mcp.run(
+    await db.init_db()
+    await mcp.run_async(
         transport="streamable-http", # fixed to streamable-http
         host="0.0.0.0",
         port=PORT,
         path=MCP_PATH,
     )
 
-
 if __name__ == "__main__":
-    streamable_http_server()
+    asyncio.run(streamable_http_server())
