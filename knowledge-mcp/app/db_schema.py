@@ -53,3 +53,10 @@ class QueryResult(BaseModel):
     chunk_id: str
     score: float
     metadata: ChunkMetadata
+
+
+class FileUploadResponse(BaseModel):
+    file_id: str
+    filename: str
+    chunks_created: int
+    message: str

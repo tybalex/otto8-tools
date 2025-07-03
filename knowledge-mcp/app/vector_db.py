@@ -68,7 +68,7 @@ async def init_db():
         await conn.execute(
             text(
                 "CREATE INDEX IF NOT EXISTS idx_chunks_embedding "
-                "ON chunks USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);"
+                "ON chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);"
             )
         )
 
@@ -161,10 +161,10 @@ async def query_chunks(tenant_id: str, embedding: list, top_k: int):
                 ChunkEntry.file_id,
                 ChunkEntry.chunk_id,
                 ChunkEntry.chunk_metadata,
-                ChunkEntry.embedding.l2_distance(embedding).label("score")
+                (1 - ChunkEntry.embedding.cosine_distance(embedding)).label("score")
             )
             .where(ChunkEntry.tenant_id == tenant_id)
-            .order_by(text("score"))
+            .order_by(text("score DESC"))  # DESC because higher is now better
             .limit(top_k)
         )
         res = await session.execute(q)
