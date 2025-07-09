@@ -1,6 +1,4 @@
-import base64
-import re
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Dict, Any
 from io import BytesIO
 from markitdown import MarkItDown, StreamInfo, DocumentConverterResult
 

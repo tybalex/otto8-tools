@@ -7,21 +7,17 @@ import app.embeddings as embeddings
 
 from fastmcp import FastMCP
 from pydantic import Field
-from typing import Annotated, Literal
+from typing import Annotated
 from fastmcp.exceptions import ToolError
 from uuid import uuid4
 import hashlib
 import base64
-
-# Import all the command functions
 from fastmcp.server.dependencies import get_http_headers
-
-# Import configuration from centralized config
 from app.config import PORT, MCP_PATH
 
 mcp = FastMCP(
     name="KnowledgeMCPServer",
-    on_duplicate_tools="error",  # Handle duplicate registrations
+    on_duplicate_tools="error",
     on_duplicate_resources="warn",
     on_duplicate_prompts="replace",
 )
@@ -44,6 +40,7 @@ generate_embedding = embeddings.generate_embedding
     name="create_knowledge_set",
 )
 async def create_knowledge_set() -> schemas.KnowledgeSetInfo:
+    """Create a new knowledge set for the user"""
     user_id = _get_user_id()
     knowledge_set_id = str(uuid4())
     await db.create_knowledge_set(user_id, knowledge_set_id)
@@ -56,6 +53,7 @@ async def create_knowledge_set() -> schemas.KnowledgeSetInfo:
     name="list_knowledge_sets",
 )
 async def list_knowledge_sets() -> list:
+    """List all knowledge sets for the user"""
     user_id = _get_user_id()
     ks = await db.list_knowledge_sets(user_id)
     return [schemas.KnowledgeSetInfo(**k.__dict__) for k in ks]
@@ -69,14 +67,13 @@ async def delete_knowledge_set(
         str, Field(description="The knowledge set ID to delete")
     ],
 ) -> dict:
+    """Delete a knowledge set and all its data"""
     user_id = _get_user_id()
     await db.delete_knowledge_set(user_id, knowledge_set_id)
     return {"detail": "knowledge set and related data deleted"}
 
 
 ## client tools
-
-
 @mcp.tool(name="ingest_file")
 async def ingest_file(
     knowledge_set_id: Annotated[
@@ -88,9 +85,7 @@ async def ingest_file(
     ],
 ) -> schemas.FileUploadResponse:
     """
-    Upload and process a file: extract text, chunk it, generate embeddings, and store.
-    This is the main file upload endpoint that handles the complete workflow.
-    Includes duplicate detection and version management with auto-cleanup of old chunks.
+    Upload and process a file: extract text, chunk it, generate embeddings, and store in the database.
     """
     user_id = _get_user_id()
 
@@ -299,7 +294,7 @@ async def text_query(
     ],
 ) -> list[schemas.QueryResult]:
     top_k = 5
-    """Query chunks using text input"""
+    """Given a query text, return the top 5 most relevant chunks from the knowledge base"""
     user_id = _get_user_id()
 
     # Generate embedding for the query text
