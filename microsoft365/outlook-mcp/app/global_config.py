@@ -2,18 +2,18 @@
 
 READ_ONLY_SCOPES = [
     "Mail.Read",
-    "User.Read", 
+    "User.Read",
     "MailboxSettings.Read",
-    # "Groups.Read.All",
-    "Files.Read.All"
+    "Groups.Read.All",
+    "Files.Read.All",
 ]
 
 ALL_SCOPES = [
     "Mail.Read",
-    "Mail.ReadWrite", 
+    "Mail.ReadWrite",
     "Mail.Send",
     "User.Read",
     "MailboxSettings.Read",
-    # "Groups.ReadWrite.All",
-    "Files.ReadWrite.All"
-] 
+    "Groups.ReadWrite.All",
+    "Files.ReadWrite.All",
+]

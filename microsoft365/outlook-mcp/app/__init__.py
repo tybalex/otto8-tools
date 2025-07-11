@@ -1,1 +1,1 @@
-# Package for Microsoft Outlook Mail functionality 
+# Package for Microsoft Outlook Mail functionality

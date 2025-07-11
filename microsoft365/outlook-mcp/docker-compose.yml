@@ -24,7 +24,7 @@ services:
     image: ghcr.io/obot-platform/mcp-oauth-proxy:master
     environment:
       DATABASE_DSN: "postgres://oauth_user:oauth_password@postgres_oauth:5432/oauth_proxy?sslmode=disable"
-      SCOPES_SUPPORTED: "openid, offline_access, https://graph.microsoft.com/Mail.Read, https://graph.microsoft.com/Mail.ReadWrite, https://graph.microsoft.com/Mail.Send, https://graph.microsoft.com/User.Read, https://graph.microsoft.com/MailboxSettings.Read, https://graph.microsoft.com/Files.ReadWrite.All"
+      SCOPES_SUPPORTED: "openid, offline_access, https://graph.microsoft.com/Mail.Read, https://graph.microsoft.com/Mail.ReadWrite, https://graph.microsoft.com/Mail.Send, https://graph.microsoft.com/User.Read, https://graph.microsoft.com/MailboxSettings.Read, https://graph.microsoft.com/Files.ReadWrite.All, https://graph.microsoft.com/Group.Read.All, https://graph.microsoft.com/Group.ReadWrite.All"
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
       OAUTH_AUTHORIZE_URL: "https://login.microsoftonline.com/common/v2.0"
