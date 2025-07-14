@@ -22,6 +22,27 @@ dev = [
     "notebook>=7.4.4",
 ]
 
+[build-system]
+requires = ["uv_build>=0.7.21,<0.8.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+module-root = "."
+source-exclude = [
+    "dev/",
+    "data/",
+    "__pycache__/",
+    ".venv/",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    ".DS_Store",
+    "test_*.txt",
+    "test_*.pdf",
+    "knowledge_mcp.egg-info/",
+]
+
 [tool.black]
 line-length = 88
 target-version = ["py313"]
