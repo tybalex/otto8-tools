@@ -37,7 +37,7 @@ A Model Context Protocol (MCP) server for intelligent knowledge management with 
 
 ## 🚀 Quick Start
 
-### Option 1: Docker Compose (Recommended)
+### Option 1: Docker Compose (Recommended) with  MCP-Oauth-Proxy Integration
 
 1. **Clone and setup**:
    ```bash
@@ -46,30 +46,23 @@ A Model Context Protocol (MCP) server for intelligent knowledge management with 
    ```
 
 2. **Set environment variables**:
+   set openAI api key
    ```bash
    export OPENAI_API_KEY="your-openai-api-key-here"
    ```
+   export Google Oauth client ID and secret too:
+   ```bash
+    export OAUTH_CLIENT_ID=xxx
+    export OAUTH_CLIENT_SECRET=xxx
+    ```
 
 3. **Start services**:
    ```bash
    docker-compose up
    ```
 
-4. **Server will be available at**: `http://localhost:9000/mcp/knowledge`
-
-#### MCP-Oauth-Proxy Integration
-1. export Google Oauth client ID and secret:
-```bash
-export OAUTH_CLIENT_ID=xxx
-export OAUTH_CLIENT_SECRET=xxx
-```
-
-2.
-```bash
-docker-compose -f docker-compose-with-oauth-proxy.yml up
-```
-
-3. Connect to the proxy server(localhost:8080/mcp) instead. For example, if using MCP Inspector:
+4. **Connect to the proxy server at localhost:8080/mcp.**
+ For example, if using MCP Inspector:
 - go to : http://localhost:6274
 - set URL to : http://localhost:8080/mcp
 - click on `Open Auth Settings`
@@ -93,7 +86,7 @@ docker-compose -f docker-compose-with-oauth-proxy.yml up
      -e POSTGRES_USER=postgres \
      -e POSTGRES_PASSWORD=password \
      -p 5432:5432 \
-     ankane/pgvector:latest
+     pgvector/pgvector:0.8.0-pg15
    ```
 
 3. **Set environment variables**:
@@ -124,7 +117,7 @@ All configuration is managed through environment variables with centralized vali
 |----------|---------|-------------|
 | `PORT` | `9000` | Server port |
 | `MCP_PATH` | `/mcp/knowledge` | MCP endpoint path |
-| `DATABASE_URL` | Auto-detected | PostgreSQL connection URL |
+| `DATABASE_URL` | `postgresql+asyncpg://postgres:password@db:5432/postgres` | PostgreSQL connection URL |
 | `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
 | `EMBEDDING_DIMENSION` | `1536` | Embedding vector dimension |
 | `SKIP_OPENAI_VALIDATION` | `false` | Skip API key validation (testing) |
@@ -205,32 +198,24 @@ Performs semantic search across the knowledge base:
 
 ## 💡 Usage Examples
 
-### Using the Demo Notebook
+### Using a Client App (Cursor, VSCode, etc.)
 
-The project includes a comprehensive Jupyter notebook (`demo.ipynb`) with examples:
+1. **Start the services** using Docker Compose (includes OAuth proxy):
+   ```bash
+   docker-compose up
+   ```
 
-```python
-# Create a knowledge set
-knowledge_set = await create_knowledge_set()
+2. **Configure your MCP client** with these settings:
+   - **Server URL**: `http://localhost:8080/mcp`
+   - **Authentication**: OAuth flow will be handled automatically by the proxy
 
-# Ingest a file
-with open("document.pdf", "rb") as f:
-    content = base64.b64encode(f.read()).decode('utf-8')
+3. **Connect and authenticate**:
+   - Your client app will redirect you to authenticate with Google OAuth
+   - Once authenticated, you'll have access to all Knowledge MCP tools
 
-result = await ingest_file(
-    knowledge_set_id=knowledge_set["knowledge_set_id"],
-    filename="document.pdf",
-    content=content
-)
+**Note**: The OAuth proxy service exposes the MCP server at port 8080, handling authentication seamlessly so your client app can focus on using the knowledge management features.
 
-# Query the knowledge base
-results = await query(
-    knowledge_set_id=knowledge_set["knowledge_set_id"],
-    query_text="What is the main topic of the document?"
-)
-```
-
-### Using FastMCP Client
+### Using Python FastMCP Client
 
 ```python
 from fastmcp import Client
@@ -337,7 +322,6 @@ knowledge-mcp/
 ├── docker-compose.yml       # Development environment
 ├── Dockerfile              # Production container
 ├── pyproject.toml          # Dependencies and project config
-├── demo.ipynb              # Usage examples and development demos
 └── README.md               # This file
 ```
 

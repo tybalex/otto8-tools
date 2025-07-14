@@ -312,13 +312,7 @@ async def list_files(user_id: str, knowledge_set_id: str):
 async def delete_file(user_id: str, knowledge_set_id: str, file_id: str):
     async with AsyncSessionLocal() as session:
         # First check if the knowledge set exists for this user
-        ks_exists = await session.execute(
-            select(KnowledgeSet).where(
-                (KnowledgeSet.user_id == user_id)
-                & (KnowledgeSet.knowledge_set_id == knowledge_set_id)
-            )
-        )
-        if not ks_exists.first():
+        if not await validate_knowledge_set_exists(session, user_id, knowledge_set_id):
             raise ValueError(f"Knowledge set '{knowledge_set_id}' not found for user")
 
         # Check if file exists before attempting to delete
