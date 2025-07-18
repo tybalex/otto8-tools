@@ -6,7 +6,7 @@ from pydantic import Field
 from fastmcp.exceptions import ToolError
 
 from .client import create_client, get_access_token
-from .global_config import READ_ONLY_SCOPES, ALL_SCOPES
+from .global_config import SCOPES
 from .graph import (
     DraftInfo,
     list_messages,
@@ -42,7 +42,7 @@ async def setup_server():
 async def list_mail_folders_tool() -> dict:
     """Lists all available Outlook mail folders."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         folders = await list_mail_folders(client)
 
         # Return folders as a simple list
@@ -97,7 +97,7 @@ async def list_emails_tool(
 ) -> dict:
     """Lists emails in an Outlook folder."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Parse parameters
 
@@ -152,7 +152,7 @@ async def get_email_details_tool(
 ) -> dict:
     """Get the details of an Outlook email, or a post in a group thread."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         if group_id and thread_id:
             # Handle group mailbox email details (posts in conversation threads)
@@ -205,7 +205,7 @@ async def search_emails_tool(
 ) -> dict:
     """Search for emails in Outlook. At least one of subject, from_address, or from_name must be specified."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Search messages
         messages = await search_messages(
@@ -269,7 +269,7 @@ async def create_draft_tool(
 ) -> dict:
     """Create (but do not send) a draft individual Outlook email."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Parse attachments
         attachment_list = []
@@ -303,7 +303,7 @@ async def send_draft_tool(
 ) -> dict:
     """Send an existing draft email in Outlook."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         await send_draft(client, draft_id)
         return {"message": f"Draft {draft_id} sent successfully"}
     except Exception as e:
@@ -321,7 +321,7 @@ async def delete_email_tool(
 ) -> dict:
     """Delete an Outlook email."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         await delete_message(client, email_id)
         return {"message": f"Email {email_id} deleted successfully"}
     except Exception as e:
@@ -337,7 +337,7 @@ async def move_email_tool(
 ) -> dict:
     """Moves an email to a different Outlook folder."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         _ = await move_message(client, email_id, destination_folder_id)
         return {"message": f"Email {email_id} moved to folder {destination_folder_id}"}
     except Exception as e:
@@ -348,7 +348,7 @@ async def move_email_tool(
 async def get_my_email_address_tool() -> dict:
     """Get the email address of the currently authenticated Outlook user."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         user = await get_me(client)
         return {"email": user.mail or user.user_principal_name}
     except Exception as e:
@@ -363,7 +363,7 @@ async def list_attachments_tool(
 ) -> dict:
     """List the attachments of an Outlook email."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         attachments = await list_attachments(client, email_id)
 
         # Return attachments as a simple list
@@ -395,7 +395,7 @@ async def download_attachment_tool(
 ) -> dict:
     """Download an attachment from an Outlook email into workspace."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Get attachment content
         content = await get_attachment_content(client, email_id, attachment_id)
@@ -431,7 +431,7 @@ async def read_attachment_tool(
 ) -> dict:
     """Get the markdown converted contents of an attachment from an Outlook email."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Get attachment content
         content = await get_attachment_content(client, email_id, attachment_id)
