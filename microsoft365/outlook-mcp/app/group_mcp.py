@@ -5,7 +5,7 @@ from pydantic import Field
 from fastmcp.exceptions import ToolError
 
 from .client import create_client, get_access_token
-from .global_config import READ_ONLY_SCOPES, ALL_SCOPES
+from .global_config import SCOPES
 from .graph import (
     GroupThreadEmailInfo,
     list_groups,
@@ -30,7 +30,7 @@ group_mcp = FastMCP(
 async def list_groups_tool() -> dict:
     """Lists all Microsoft 365 groups the user is a member of."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         try:
             groups = await list_groups(client)
@@ -96,7 +96,7 @@ async def list_group_threads_tool(
 ) -> dict:
     """Lists all group mailbox threads in a Microsoft 365 group. This will also return emails in the threads."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         threads = await list_group_threads(
             client, group_id=group_id, start=start, end=end, limit=limit
@@ -149,7 +149,7 @@ async def create_group_thread_email_tool(
 ) -> dict:
     """Compose a group thread email in Outlook that is always sent to the Microsoft 365 group email address."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
 
         # Parse additional recipients
         recipient_list = []
@@ -187,7 +187,7 @@ async def delete_group_thread_tool(
 ) -> dict:
     """Delete a group mailbox thread in Outlook."""
     try:
-        client = create_client(ALL_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         await delete_group_thread(client, group_id, thread_id)
         return {"message": f"Group thread {thread_id} deleted successfully"}
     except Exception as e:
@@ -208,7 +208,7 @@ async def list_group_thread_email_attachments_tool(
 ) -> dict:
     """Lists all attachments in a specific Outlook group thread email."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         attachments = await list_group_thread_email_attachments(
             client, group_id, thread_id, email_id
         )
@@ -241,7 +241,7 @@ async def list_group_thread_posts_tool(
 ) -> dict:
     """Lists all posts in a specific Outlook group thread."""
     try:
-        client = create_client(READ_ONLY_SCOPES, get_access_token())
+        client = create_client(SCOPES, get_access_token())
         posts = await list_group_thread_posts(client, group_id, thread_id)
 
         post_list = []
