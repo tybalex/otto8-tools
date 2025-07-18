@@ -18,7 +18,6 @@ from .graph import (
     delete_message,
     move_message,
     get_me,
-    get_user_type,
     list_attachments,
     get_attachment_content,
     list_mail_folders,
@@ -339,7 +338,7 @@ async def move_email_tool(
     """Moves an email to a different Outlook folder."""
     try:
         client = create_client(ALL_SCOPES, get_access_token())
-        result = await move_message(client, email_id, destination_folder_id)
+        _ = await move_message(client, email_id, destination_folder_id)
         return {"message": f"Email {email_id} moved to folder {destination_folder_id}"}
     except Exception as e:
         raise ToolError(f"Failed to move email: {e}")

@@ -1,6 +1,5 @@
 """Utility functions for Outlook Mail operations."""
 
-import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from msgraph.generated.models.message import Message

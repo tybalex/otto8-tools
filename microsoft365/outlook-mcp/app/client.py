@@ -1,8 +1,6 @@
 """Client module for Microsoft Graph API authentication and client creation."""
 
-import os
 from typing import List
-from azure.identity import ClientSecretCredential
 from msgraph import GraphServiceClient
 from azure.core.credentials import AccessToken
 from azure.core.credentials_async import AsyncTokenCredential
