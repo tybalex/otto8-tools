@@ -36,7 +36,6 @@ jobs:
           context: ./microsoft365/outlook-mcp
           push: true
           pull: true
-          target: tools
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository }}/outlook:latest
