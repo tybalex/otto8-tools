@@ -7,6 +7,8 @@ permissions:
 
 on:
   push:
+    paths:
+      - 'google/gmail/**'
     branches:
       - main
 
