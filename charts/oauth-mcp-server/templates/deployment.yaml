@@ -36,6 +36,20 @@ spec:
             - name: proxy-http
               containerPort: 8080
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
           {{- if .Values.proxy.extraEnv }}
           env:
             {{- range $key, $value := .Values.proxy.extraEnv }}
@@ -59,6 +73,20 @@ spec:
             - name: mcp-server-http
               containerPort: 9000
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
           {{- if .Values.mcpServer.extraEnv }}
           env:
             {{- range $key, $value := .Values.mcpServer.extraEnv }}
