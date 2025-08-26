@@ -3,6 +3,7 @@ from googleapiclient.discovery import Resource
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
 from io import BytesIO
+from fastmcp.exceptions import ToolError
 
 # Constants
 MAX_DOWNLOAD_SIZE = 100 * 1024 * 1024  # Download file not larger than 100MB
@@ -91,10 +92,7 @@ def list_files(
         return files
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-        )
-        return []
+        raise ToolError(f"Failed to list files, HttpError: {error_details}")
 
 
 def get_file(
@@ -122,10 +120,7 @@ def get_file(
         )
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-        )
-        return None
+        raise ToolError(f"Failed to get file, HttpError: {error_details}")
 
 
 # https://developers.google.com/workspace/drive/api/guides/manage-uploads
@@ -183,10 +178,7 @@ def create_file(
             )
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-        )
-        return None
+        raise ToolError(f"Failed to create file, HttpError: {error_details}")
 
 
 def delete_file(service: Resource, file_id: str) -> bool:
@@ -208,17 +200,15 @@ def delete_file(service: Resource, file_id: str) -> bool:
         if error.resp.status == 403:
             reason = error_details.get("reason")
             if reason == "insufficientFilePermissions":
-                print(
+                raise ToolError(
                     f"Permission denied: You don't have sufficient permissions to delete file {file_id}"
                 )
             else:
-                print(
+                raise ToolError(
                     f"Access denied: Unable to delete file {file_id} (reason: {reason})"
                 )
         else:
-            print(
-                f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-            )
+            raise ToolError(f"Failed to delete file, HttpError: {error_details}")
         return False
 
 
@@ -278,13 +268,10 @@ def update_file(
 
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-        )
-        return None
+        raise ToolError(f"Failed to update file, HttpError: {error_details}")
 
 
-def download_file(service: Resource, file_id: str) -> Tuple[Optional[bytes], str]:
+def download_file(service: Resource, file_id: str) -> Tuple[bytes, str]:
     """
     Download a file's content from Google Drive.
     Files larger than 100MB will not be downloaded.
@@ -300,7 +287,7 @@ def download_file(service: Resource, file_id: str) -> Tuple[Optional[bytes], str
         # Get the file metadata including size
         file = get_file(service, file_id, "mimeType, size, name")
         if not file:
-            return None, None
+            raise ToolError(f"File not found: {file_id}")
 
         file_name = file["name"]
 
@@ -308,10 +295,9 @@ def download_file(service: Resource, file_id: str) -> Tuple[Optional[bytes], str
         if not file["mimeType"].startswith("application/vnd.google-apps"):
             file_size = int(file.get("size", 0))
             if file_size > MAX_DOWNLOAD_SIZE:
-                print(
+                raise ToolError(
                     f"File '{file['name']}' is too large ({file_size / (1024 * 1024):.2f}MB). Maximum size is {MAX_DOWNLOAD_SIZE / (1024 * 1024):.0f}MB."
                 )
-                return None, file_name
 
         # Handle Google Workspace files (Docs, Sheets, Slides, etc.)
         if file["mimeType"].startswith("application/vnd.google-apps"):
@@ -353,10 +339,9 @@ def download_file(service: Resource, file_id: str) -> Tuple[Optional[bytes], str
 
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
+        raise ToolError(
+            f"Failed to download file content: {file_id}, Error code: {error.resp.status}, Error message: {error_details}"
         )
-        return None, None
 
 
 def copy_file(
@@ -398,10 +383,7 @@ def copy_file(
 
     except HttpError as error:
         error_details = error.error_details[0] if error.error_details else {}
-        print(
-            f"An error occurred. Error code: {error.resp.status}, Error message: {error_details}"
-        )
-        return None
+        raise ToolError(f"Failed to copy file, HttpError: {error_details}")
 
 
 def create_folder(
