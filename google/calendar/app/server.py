@@ -19,6 +19,7 @@ from .tools.event import (
 )
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
 logger = setup_logger(__name__)
 
 # Configure server-specific settings
@@ -30,8 +31,9 @@ mcp = FastMCP(
     on_duplicate_tools="error",
     on_duplicate_resources="warn",
     on_duplicate_prompts="replace",
-    mask_error_details=True
+    mask_error_details=True,
 )
+
 
 def _get_access_token() -> str:
     headers = get_http_headers()
@@ -42,9 +44,11 @@ def _get_access_token() -> str:
         )
     return access_token
 
+
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request):
     return JSONResponse({"status": "healthy"})
+
 
 @mcp.tool(
     annotations={
@@ -68,7 +72,9 @@ def list_calendars() -> list:
         "destructiveHint": False,
     },
 )
-def get_calendar(calendar_id: Annotated[str, Field(description="calendar id to get")]) -> dict:
+def get_calendar(
+    calendar_id: Annotated[str, Field(description="calendar id to get")],
+) -> dict:
     """Get details of a specific google calendar"""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -82,11 +88,13 @@ def get_calendar(calendar_id: Annotated[str, Field(description="calendar id to g
         raise ToolError(f"Failed to get google calendar. Exception: {e}")
 
 
-@mcp.tool(
-)
-def create_calendar(summary: Annotated[str, Field(description="calendar title to create")],
-                    time_zone: Annotated[str | None, Field(description="calendar timezone to create")] = None,
-                    ) -> dict:
+@mcp.tool()
+def create_calendar(
+    summary: Annotated[str, Field(description="calendar title to create")],
+    time_zone: Annotated[
+        str | None, Field(description="calendar timezone to create")
+    ] = None,
+) -> dict:
     """Creates a new google calendar."""
     if summary == "":
         raise ValueError("argument `summary` can't be empty")
@@ -108,15 +116,25 @@ def create_calendar(summary: Annotated[str, Field(description="calendar title to
         raise ToolError(f"Failed to create google calendar. Exception: {e}")
 
 
-
-@mcp.tool(
-)
-def update_calendar(calendar_id: Annotated[str, Field(description="calendar id to update")],
-                    summary: Annotated[str | None, Field(description="calendar title to update")] = None,
-                    time_zone: Annotated[str | None, Field(description="calendar timezone to update")] = None,
-                    description: Annotated[str | None, Field(description="calendar description to update")] = None,
-                    location: Annotated[str | None, Field(description="Geographic location of the calendar as free-form text to update")] = None,
-                    ) -> dict:
+@mcp.tool()
+def update_calendar(
+    calendar_id: Annotated[str, Field(description="calendar id to update")],
+    summary: Annotated[
+        str | None, Field(description="calendar title to update")
+    ] = None,
+    time_zone: Annotated[
+        str | None, Field(description="calendar timezone to update")
+    ] = None,
+    description: Annotated[
+        str | None, Field(description="calendar description to update")
+    ] = None,
+    location: Annotated[
+        str | None,
+        Field(
+            description="Geographic location of the calendar as free-form text to update"
+        ),
+    ] = None,
+) -> dict:
     """Updates an existing google calendar"""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -142,9 +160,10 @@ def update_calendar(calendar_id: Annotated[str, Field(description="calendar id t
         raise ToolError(f"Failed to update google calendar. Exception: {e}")
 
 
-@mcp.tool(
-)
-def delete_calendar(calendar_id: Annotated[str, Field(description="calendar id to delete")]) -> str:
+@mcp.tool()
+def delete_calendar(
+    calendar_id: Annotated[str, Field(description="calendar id to delete")],
+) -> str:
     """Deletes a google calendar"""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -164,15 +183,47 @@ def delete_calendar(calendar_id: Annotated[str, Field(description="calendar id t
         "destructiveHint": False,
     },
 )
-def list_events(calendar_id: Annotated[str, Field(description="calendar id")],
-                event_type: Annotated[Literal["birthday", "default", "focusTime", "fromGmail", "outOfOffice", "workingLocation"], Field(description="The type of event to list. Defaults to 'default'")] = "default",
-                single_event: Annotated[bool, Field(description="Whether to list only single event.")] = False,
-                time_min: Annotated[str | None, Field(description="Upper bound (exclusive) for an event's start time to filter by. if both time_min and time_max are None, time_min will be set to the current time. Must be an RFC3339 timestamp with mandatory time zone offset.")] = None,
-                time_max: Annotated[str | None, Field(description="Lower bound (exclusive) for an event's end time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset.")] = None,
-                order_by: Annotated[Literal["updated"] | None, Field(description="Order by which to sort events. Valid options are: updated. If set, results will be returned in ascending order.")] = None,
-                q: Annotated[str | None, Field(description="Free text search terms to find events by")] = None,
-                max_results: Annotated[int, Field(description="Maximum number of events to return.", ge=1, le=500)] = 250,
-                    ) -> list:
+def list_events(
+    calendar_id: Annotated[str, Field(description="calendar id")],
+    event_type: Annotated[
+        Literal[
+            "birthday",
+            "default",
+            "focusTime",
+            "fromGmail",
+            "outOfOffice",
+            "workingLocation",
+        ],
+        Field(description="The type of event to list. Defaults to 'default'"),
+    ] = "default",
+    single_event: Annotated[
+        bool, Field(description="Whether to list only single event.")
+    ] = False,
+    time_min: Annotated[
+        str | None,
+        Field(
+            description="Upper bound (exclusive) for an event's start time to filter by. if both time_min and time_max are None, time_min will be set to the current time. Must be an RFC3339 timestamp with mandatory time zone offset."
+        ),
+    ] = None,
+    time_max: Annotated[
+        str | None,
+        Field(
+            description="Lower bound (exclusive) for an event's end time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset."
+        ),
+    ] = None,
+    order_by: Annotated[
+        Literal["updated"] | None,
+        Field(
+            description="Order by which to sort events. Valid options are: updated. If set, results will be returned in ascending order."
+        ),
+    ] = None,
+    q: Annotated[
+        str | None, Field(description="Free text search terms to find events by")
+    ] = None,
+    max_results: Annotated[
+        int, Field(description="Maximum number of events to return.", ge=1, le=500)
+    ] = 250,
+) -> list:
     """Lists events for a specific google calendar."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -234,9 +285,13 @@ def list_events(calendar_id: Annotated[str, Field(description="calendar id")],
                 break
         return all_events
     except HttpError as err:
-        raise ToolError(f"Failed to list events from calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to list events from calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to list events from calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to list events from calendar {calendar_id}. Exception: {e}"
+        )
 
 
 @mcp.tool(
@@ -245,9 +300,10 @@ def list_events(calendar_id: Annotated[str, Field(description="calendar id")],
         "destructiveHint": False,
     },
 )
-def get_event(calendar_id: Annotated[str, Field(description="calendar id to get event from")],
-              event_id: Annotated[str, Field(description="event id to get")],
-              ) -> dict:
+def get_event(
+    calendar_id: Annotated[str, Field(description="calendar id to get event from")],
+    event_id: Annotated[str, Field(description="event id to get")],
+) -> dict:
     """Gets details of a specific google event."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -259,17 +315,23 @@ def get_event(calendar_id: Annotated[str, Field(description="calendar id to get 
         event = service.events().get(calendarId=calendar_id, eventId=event_id).execute()
         return event
     except HttpError as err:
-        raise ToolError(f"Failed to get event {event_id} from calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to get event {event_id} from calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to get event {event_id} from calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to get event {event_id} from calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def move_event(calendar_id: Annotated[str, Field(description="calendar id to move event from")],
-              event_id: Annotated[str, Field(description="event id to move")],
-              new_calendar_id: Annotated[str, Field(description="calendar id to move the event to")],
-              ) -> dict:
+@mcp.tool()
+def move_event(
+    calendar_id: Annotated[str, Field(description="calendar id to move event from")],
+    event_id: Annotated[str, Field(description="event id to move")],
+    new_calendar_id: Annotated[
+        str, Field(description="calendar id to move the event to")
+    ],
+) -> dict:
     """Moves an event to a different google calendar."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -297,16 +359,22 @@ def move_event(calendar_id: Annotated[str, Field(description="calendar id to mov
         )
         return event
     except HttpError as err:
-        raise ToolError(f"Failed to move event {event_id} to calendar {new_calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to move event {event_id} to calendar {new_calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to move event {event_id} to calendar {new_calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to move event {event_id} to calendar {new_calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def quick_add_event(text: Annotated[str, Field(description="The text of the event to add")],
-                    calendar_id: Annotated[str, Field(description="The ID of the calendar to add event for")] = "primary",
-                    ) -> dict:
+@mcp.tool()
+def quick_add_event(
+    text: Annotated[str, Field(description="The text of the event to add")],
+    calendar_id: Annotated[
+        str, Field(description="The ID of the calendar to add event for")
+    ] = "primary",
+) -> dict:
     """Quickly adds an event to the calendar based on a simple text string."""
     if text == "":
         raise ValueError("argument `text` can't be empty")
@@ -316,25 +384,69 @@ def quick_add_event(text: Annotated[str, Field(description="The text of the even
         event = service.events().quickAdd(calendarId=calendar_id, text=text).execute()
         return event
     except HttpError as err:
-        raise ToolError(f"Failed to quick add event to calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to quick add event to calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to quick add event to calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to quick add event to calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def create_event(calendar_id: Annotated[str, Field(description="Calendar id to create event in. Set to `primary` to create event in the primary calendar")],
-                 summary: Annotated[str, Field(description="Event title")] = "My Event",
-                 location: Annotated[str, Field(description="Geographic location of the event as free-form text.")] = "",
-                 description: Annotated[str, Field(description="Event description")] = "",
-                 time_zone: Annotated[str | None, Field(description="Event time zone to create. Defaults to the user's timezone. Must be a valid IANA timezone string")] = None,
-                 start_date: Annotated[str | None, Field(description="Event start date in the format 'yyyy-mm-dd', only used if this is an all-day event")] = None,
-                 start_datetime: Annotated[str | None, Field(description="Event start date and time to create. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone")] = None,
-                 end_date: Annotated[str | None, Field(description="Event end date in the format 'yyyy-mm-dd', only used if this is an all-day event")] = None,
-                 end_datetime: Annotated[str | None, Field(description="Event end date and time to create. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone")] = None,
-                 recurrence: Annotated[list[str] | None, Field(description='To create a recurring event, provide a list of strings, where each string is an RRULE, EXRULE, RDATE, or EXDATE line as defined by the RFC5545. For example, ["RRULE:FREQ=YEARLY", "EXDATE:20250403T100000Z"]. Note that DTSTART and DTEND are not allowed in this field, because they are already specified in the start_datetime and end_datetime fields.')] = None,
-                 attendees: Annotated[list[str] | None, Field(description="A list of email addresses of the attendees")] = None,
-                    ) -> dict:
+@mcp.tool()
+def create_event(
+    calendar_id: Annotated[
+        str,
+        Field(
+            description="Calendar id to create event in. Set to `primary` to create event in the primary calendar"
+        ),
+    ],
+    summary: Annotated[str, Field(description="Event title")] = "My Event",
+    location: Annotated[
+        str, Field(description="Geographic location of the event as free-form text.")
+    ] = "",
+    description: Annotated[str, Field(description="Event description")] = "",
+    time_zone: Annotated[
+        str | None,
+        Field(
+            description="Event time zone to create. Defaults to the user's timezone. Must be a valid IANA timezone string"
+        ),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        Field(
+            description="Event start date in the format 'yyyy-mm-dd', only used if this is an all-day event"
+        ),
+    ] = None,
+    start_datetime: Annotated[
+        str | None,
+        Field(
+            description="Event start date and time to create. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone"
+        ),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        Field(
+            description="Event end date in the format 'yyyy-mm-dd', only used if this is an all-day event"
+        ),
+    ] = None,
+    end_datetime: Annotated[
+        str | None,
+        Field(
+            description="Event end date and time to create. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone"
+        ),
+    ] = None,
+    recurrence: Annotated[
+        list[str] | None,
+        Field(
+            description='To create a recurring event, provide a list of strings, where each string is an RRULE, EXRULE, RDATE, or EXDATE line as defined by the RFC5545. For example, ["RRULE:FREQ=YEARLY", "EXDATE:20250403T100000Z"]. Note that DTSTART and DTEND are not allowed in this field, because they are already specified in the start_datetime and end_datetime fields.'
+        ),
+    ] = None,
+    attendees: Annotated[
+        list[str] | None,
+        Field(description="A list of email addresses of the attendees"),
+    ] = None,
+) -> dict:
     """Creates an event in a given google calendar."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -403,27 +515,74 @@ def create_event(calendar_id: Annotated[str, Field(description="Calendar id to c
         )
         return event
     except HttpError as err:
-        raise ToolError(f"Failed to create event in calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to create event in calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to create event in calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to create event in calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def update_event(calendar_id: Annotated[str, Field(description="Calendar id to update event in.")],
-                 event_id: Annotated[str, Field(description="Event id to update")],
-                 summary: Annotated[str | None, Field(description="Event title")] = None,
-                 location: Annotated[str | None, Field(description="Geographic location of the event as free-form text.")] = None,
-                 description: Annotated[str | None, Field(description="Event description")] = None,
-                 time_zone: Annotated[str | None, Field(description="Event time zone to update. Defaults to the user's timezone. Must be a valid IANA timezone string")] = None,
-                 start_date: Annotated[str | None, Field(description="Event date in the format 'yyyy-mm-dd', only used if this is an all-day event")] = None,
-                 start_datetime: Annotated[str | None, Field(description="Event start date and time to update. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone")] = None,
-                 end_date: Annotated[str | None, Field(description="Event end date in the format 'yyyy-mm-dd', only used if this is an all-day event")] = None,
-                 end_datetime: Annotated[str | None, Field(description="Event end date and time to update. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone")] = None,
-                 recurrence: Annotated[list[str] | None, Field(description='For a recurring event, provide a list of strings, where each string is an RRULE, EXRULE, RDATE, or EXDATE line as defined by the RFC5545. For example, ["RRULE:FREQ=YEARLY", "EXDATE:20250403T100000Z"]. Note that DTSTART and DTEND are not allowed in this field, because they are already specified in the start_datetime and end_datetime fields.')] = None,
-                 add_attendees: Annotated[list[str] | None, Field(description="A list of email addresses of the attendees to add. This will add the new attendees to the existing attendees list")] = None,
-                 replace_attendees: Annotated[list[str] | None, Field(description="A list of email addresses of the attendees to replace. This is only valid when add_attendees is empty. This will replace the existing attendees list with the new list")] = None,
-                    ) -> dict:
+@mcp.tool()
+def update_event(
+    calendar_id: Annotated[str, Field(description="Calendar id to update event in.")],
+    event_id: Annotated[str, Field(description="Event id to update")],
+    summary: Annotated[str | None, Field(description="Event title")] = None,
+    location: Annotated[
+        str | None,
+        Field(description="Geographic location of the event as free-form text."),
+    ] = None,
+    description: Annotated[str | None, Field(description="Event description")] = None,
+    time_zone: Annotated[
+        str | None,
+        Field(
+            description="Event time zone to update. Defaults to the user's timezone. Must be a valid IANA timezone string"
+        ),
+    ] = None,
+    start_date: Annotated[
+        str | None,
+        Field(
+            description="Event date in the format 'yyyy-mm-dd', only used if this is an all-day event"
+        ),
+    ] = None,
+    start_datetime: Annotated[
+        str | None,
+        Field(
+            description="Event start date and time to update. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone"
+        ),
+    ] = None,
+    end_date: Annotated[
+        str | None,
+        Field(
+            description="Event end date in the format 'yyyy-mm-dd', only used if this is an all-day event"
+        ),
+    ] = None,
+    end_datetime: Annotated[
+        str | None,
+        Field(
+            description="Event end date and time to update. Must be a valid RFC 3339 formatted date/time string. A time zone offset is required unless a time zone is explicitly specified in timeZone"
+        ),
+    ] = None,
+    recurrence: Annotated[
+        list[str] | None,
+        Field(
+            description='For a recurring event, provide a list of strings, where each string is an RRULE, EXRULE, RDATE, or EXDATE line as defined by the RFC5545. For example, ["RRULE:FREQ=YEARLY", "EXDATE:20250403T100000Z"]. Note that DTSTART and DTEND are not allowed in this field, because they are already specified in the start_datetime and end_datetime fields.'
+        ),
+    ] = None,
+    add_attendees: Annotated[
+        list[str] | None,
+        Field(
+            description="A list of email addresses of the attendees to add. This will add the new attendees to the existing attendees list"
+        ),
+    ] = None,
+    replace_attendees: Annotated[
+        list[str] | None,
+        Field(
+            description="A list of email addresses of the attendees to replace. This is only valid when add_attendees is empty. This will replace the existing attendees list with the new list"
+        ),
+    ] = None,
+) -> dict:
     """Updates an existing google calendar event."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -437,28 +596,34 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
         )
         existing_event_type = existing_event.get("eventType")
     except HttpError as err:
-        raise ToolError(f"Failed to get event {event_id} from calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to get event {event_id} from calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to get event {event_id} from calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to get event {event_id} from calendar {calendar_id}. Exception: {e}"
+        )
 
-    def return_field_update_error(field: str, event_type: str):
-        return f"Operation Forbidden: Updating property '{field}' for event type '{event_type}' is not allowed."
+    def raise_field_update_error(field: str, event_type: str):
+        raise ToolError(
+            f"Operation Forbidden: Updating property '{field}' for event type '{event_type}' is not allowed."
+        )
 
     event_body = {}
     if summary:
         if not can_update_property(existing_event_type, "summary"):
-            return return_field_update_error("summary", existing_event_type)
+            raise_field_update_error("summary", existing_event_type)
 
         event_body["summary"] = summary
 
     if location:
         if not can_update_property(existing_event_type, "location"):
-            return return_field_update_error("location", existing_event_type)
+            raise_field_update_error("location", existing_event_type)
         event_body["location"] = location
 
     if description:
         if not can_update_property(existing_event_type, "description"):
-            return return_field_update_error("description", existing_event_type)
+            raise_field_update_error("description", existing_event_type)
         event_body["description"] = description
 
     if time_zone and not is_valid_iana_timezone(time_zone):
@@ -468,7 +633,7 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
 
     start = {}
     if not can_update_property(existing_event_type, "start"):
-        return return_field_update_error("start", existing_event_type)
+        raise_field_update_error("start", existing_event_type)
 
     if start_date:
         if not is_valid_date(start_date):
@@ -489,7 +654,7 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
 
     end = {}
     if not can_update_property(existing_event_type, "end"):
-        return return_field_update_error("end", existing_event_type)
+        raise_field_update_error("end", existing_event_type)
 
     if end_date:
         if not is_valid_date(end_date):
@@ -510,14 +675,14 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
 
     if recurrence:
         if not can_update_property(existing_event_type, "recurrence"):
-            return return_field_update_error("recurrence", existing_event_type)
+            raise_field_update_error("recurrence", existing_event_type)
 
         if validate_recurrence_list(recurrence):
             event_body["recurrence"] = recurrence
 
     if add_attendees or replace_attendees:
         if not can_update_property(existing_event_type, "attendees"):
-            return return_field_update_error("attendees", existing_event_type)
+            raise_field_update_error("attendees", existing_event_type)
 
         existing_attendees = existing_event.get("attendees", [])
         existing_attendee_map = {
@@ -527,9 +692,7 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
 
         if add_attendees:
             # ADD mode takes priority if both are present
-            new_emails = {
-                email.strip() for email in add_attendees if email.strip()
-            }
+            new_emails = {email.strip() for email in add_attendees if email.strip()}
             existing_emails = set(existing_attendee_map.keys())
 
             final_attendees = existing_attendees.copy()  # preserve full metadata
@@ -539,9 +702,7 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
                     final_attendees.append({"email": email})
 
         elif replace_attendees:
-            new_emails = {
-                email.strip() for email in replace_attendees if email.strip()
-            }
+            new_emails = {email.strip() for email in replace_attendees if email.strip()}
             for email in new_emails:
                 if email in existing_attendee_map:
                     final_attendees.append(existing_attendee_map[email])
@@ -565,17 +726,26 @@ def update_event(calendar_id: Annotated[str, Field(description="Calendar id to u
         )
         return updated_event
     except HttpError as err:
-        raise ToolError(f"Failed to update event {event_id} in calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to update event {event_id} in calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to update event {event_id} in calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to update event {event_id} in calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def respond_to_event(calendar_id: Annotated[str, Field(description="Calendar id to respond to event in.")],
-                     event_id: Annotated[str, Field(description="Event id to respond to")],
-                     response: Annotated[Literal["accepted", "declined", "tentative"], Field(description="The response to the event invitation")],
-                        ) -> dict:
+@mcp.tool()
+def respond_to_event(
+    calendar_id: Annotated[
+        str, Field(description="Calendar id to respond to event in.")
+    ],
+    event_id: Annotated[str, Field(description="Event id to respond to")],
+    response: Annotated[
+        Literal["accepted", "declined", "tentative"],
+        Field(description="The response to the event invitation"),
+    ],
+) -> dict:
     """Responds to a calendar event by updating the current user's attendee status."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -615,16 +785,20 @@ def respond_to_event(calendar_id: Annotated[str, Field(description="Calendar id 
         return updated_event
 
     except HttpError as err:
-        raise ToolError(f"Failed to respond to event {event_id} in calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to respond to event {event_id} in calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to respond to event {event_id} in calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to respond to event {event_id} in calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def delete_event(calendar_id: Annotated[str, Field(description="Calendar id to delete event from.")],
-                 event_id: Annotated[str, Field(description="Event id to delete")],
-                 ) -> dict:
+@mcp.tool()
+def delete_event(
+    calendar_id: Annotated[str, Field(description="Calendar id to delete event from.")],
+    event_id: Annotated[str, Field(description="Event id to delete")],
+) -> str:
     """Deletes an event from the calendar."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -636,19 +810,39 @@ def delete_event(calendar_id: Annotated[str, Field(description="Calendar id to d
         service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
         return f"Event {event_id} deleted successfully."
     except HttpError as err:
-        raise ToolError(f"Failed to delete event {event_id} in calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to delete event {event_id} in calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to delete event {event_id} in calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to delete event {event_id} in calendar {calendar_id}. Exception: {e}"
+        )
 
 
-@mcp.tool(
-)
-def list_recurring_event_instances(calendar_id: Annotated[str, Field(description="Calendar id to list recurring event instances from.")],
-                                   event_id: Annotated[str, Field(description="Event id to list recurring event instances for")],
-                                   time_min: Annotated[str | None, Field(description="Upper bound (exclusive) for an event's start time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset.")] = None,
-                                   time_max: Annotated[str | None, Field(description="Lower bound (exclusive) for an event's end time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset.")] = None,
-                                   max_results: Annotated[int, Field(description="Maximum number of events to return.", ge=1, le=500)] = 250,
-                                   ) -> list:
+@mcp.tool()
+def list_recurring_event_instances(
+    calendar_id: Annotated[
+        str, Field(description="Calendar id to list recurring event instances from.")
+    ],
+    event_id: Annotated[
+        str, Field(description="Event id to list recurring event instances for")
+    ],
+    time_min: Annotated[
+        str | None,
+        Field(
+            description="Upper bound (exclusive) for an event's start time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset."
+        ),
+    ] = None,
+    time_max: Annotated[
+        str | None,
+        Field(
+            description="Lower bound (exclusive) for an event's end time to filter by. Must be an RFC3339 timestamp with mandatory time zone offset."
+        ),
+    ] = None,
+    max_results: Annotated[
+        int, Field(description="Maximum number of events to return.", ge=1, le=500)
+    ] = 250,
+) -> list:
     """Gets all instances of a recurring event."""
     if calendar_id == "":
         raise ValueError("argument `calendar_id` can't be empty")
@@ -694,19 +888,24 @@ def list_recurring_event_instances(calendar_id: Annotated[str, Field(description
                 break
         return all_instances
     except HttpError as err:
-        raise ToolError(f"Failed to list recurring event instances for event {event_id} in calendar {calendar_id}. HttpError: {err}")
+        raise ToolError(
+            f"Failed to list recurring event instances for event {event_id} in calendar {calendar_id}. HttpError: {err}"
+        )
     except Exception as e:
-        raise ToolError(f"Failed to list recurring event instances for event {event_id} in calendar {calendar_id}. Exception: {e}")
+        raise ToolError(
+            f"Failed to list recurring event instances for event {event_id} in calendar {calendar_id}. Exception: {e}"
+        )
 
 
 def streamable_http_server():
     """Main entry point for the Gmail MCP server."""
     mcp.run(
-        transport="streamable-http", # fixed to streamable-http
+        transport="streamable-http",  # fixed to streamable-http
         host="0.0.0.0",
         port=PORT,
         path=MCP_PATH,
     )
+
 
 def stdio_server():
     """Main entry point for the Gmail MCP server."""

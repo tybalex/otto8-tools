@@ -256,6 +256,7 @@ def validate_recurrence_list(recurrence_list: list[str]) -> list[str]:
 
     return recurrence_list
 
+
 def get_current_user_email(service) -> str:
     """
     Gets the email of the current user, by getting the user_id of the primary calendar.
